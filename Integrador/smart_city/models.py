@@ -20,6 +20,6 @@ class Ambientes:
 
 
 class Historico:
-    sensor = models.ForeignKey(Sensores, related_name='sensores')
-    ambiente = models.ForeignKey(Ambientes, related_name='ambientes')
+    sensor = models.ForeignKey('Sensores', on_delete=models.CASCADE)
+    ambiente = models.ForeignKey('Ambientes', on_delete=models.CASCADE)
     observacoes = models.TextField(max_length=300)

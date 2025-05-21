@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'smart.city',
+    'smart_city',
     'rest_framework',
     'rest_framework_simplejwt'
 
@@ -111,7 +111,7 @@ WSGI_APPLICATION = 'Integrador.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'smart_city',
         'USER': 'root',
         'PASSWORD': 'senai',
