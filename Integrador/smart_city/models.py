@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
-class Sensores:
+class Sensores(models.Model):
     sensor = models.CharField(max_length=255, null=True, blank=True)
     mac_address = models.CharField(max_length=255, null=True, blank=True)
     unidade_mad = models.CharField(max_length=255, null=True, blank=True)
@@ -12,7 +12,7 @@ class Sensores:
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     status = models.CharField(max_length=255, null=True, blank=True)
-    timestamp = models.CharField(max_length=255, null=True, blank=True)
+    timestamp = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.sensor}'
@@ -22,7 +22,7 @@ class Sensores:
         verbose_name_plural = 'Sensores'
 
 
-class Ambientes:
+class Ambientes(models.Model):
     sig = models.CharField(max_length=255, null=True, blank=True)
     descricao = models.CharField(max_length=255, null=True, blank=True)
     ni = models.CharField(max_length=255, null=True, blank=True)
@@ -35,7 +35,7 @@ class Ambientes:
         verbose_name = 'ambiente'
         verbose_name_plural = 'Ambientes'
 
-class Historico:
+class Historico(models.Model):
     sensor = models.ForeignKey('Sensores', on_delete=models.CASCADE, null=True, blank=True)
     ambiente = models.ForeignKey('Ambientes', on_delete=models.CASCADE, null=True, blank=True)
     observacoes = models.TextField(max_length=300, null=True, blank=True)
@@ -55,15 +55,14 @@ DADOS_SENSORES = [
 ]
 
 class UsuarioCadastro(AbstractUser):
-    id = models.IntegerField(null=True, blank=True)
     dados_sensores = models.CharField(max_length=1, choices=DADOS_SENSORES, null=True, blank=True)
     nome = models.CharField(max_length=255, null=True, blank=True)
-    senha = models.CharField(max_length=255)
-    idade = models.PositiveIntegerField()
+    email = models.EmailField(unique=True, null=True)
+    idade = models.PositiveIntegerField(null=True, blank=True)
     foto = models.ImageField(upload_to='images/', blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
-        return self.name
+        return self.email
