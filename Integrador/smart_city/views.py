@@ -17,7 +17,7 @@ from .paginations import MyLimitOffsetPagination
 from .permissions import (IsSensor,
                           IsHistorico,
                           IsAmbiente)
-from .serializers import CustomTokenObtainPairSerializer, UserSerializer
+from .serializers import CustomTokenObtainPairSerializer, UsuarioCadastro
 from rest_framework.views import APIView
 
 # Create your views here.
@@ -140,20 +140,26 @@ def sensorDetail(request, pk):
             Response('Sensor excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
             return Response('Sensor não encontrado', status=status.HTTP_404_NOT_FOUND)
     
-class CustomTokenObtainPairSerializer(TokenObtainPairView):
+class CustomTokenObtainPairSerializer(TokenObtainPairView): # Esse método manipula uma criação de tokens de acesso ao login
     serializer_class = CustomTokenObtainPairSerializer
 
-class CustomTokenRefreshView(TokenRefreshView):
+class CustomTokenRefreshView(TokenRefreshView): # Esse método é responsável por atualizar tokens de acesso ao usuário
     pass
 
-class RegisterView(APIView):
+class RegisterView(APIView): # Esse método, permite que os novos usuários se registrem a partir da permissions classes
     permission_classes = [AllowAny]
 
-def authenticationJWT(self, request):
-    serializer = UserSerializer(data=request.data)
+def authenticationUser(request):
+    serializer = UsuarioCadastro(data= request.data)
     if serializer.is_valid():
         user = serializer.save()
         if user:
             json = serializer.data
-            return Response(json.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(json, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'message':'This field is protected.'})
