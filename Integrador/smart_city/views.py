@@ -14,9 +14,6 @@ from .serializers import (AmbienteSerializer,
                           HistoricoSerializer,
                           SensorSerializer)
 from .paginations import MyLimitOffsetPagination
-from .permissions import (IsSensor,
-                          IsHistorico,
-                          IsAmbiente)
 from .serializers import CustomTokenObtainPairSerializer, UsuarioCadastro
 from rest_framework.views import APIView
 
@@ -25,7 +22,8 @@ from rest_framework.views import APIView
 @api_view(['GET'])
 def apiOverview(request):
     api_urls = {
-        'all_itens': '/'
+        'all_itens': '/',
+        ''
     }
 
     return Response(api_urls)
@@ -34,7 +32,7 @@ class AmbienteList(ListAPIView):
     queryset = Ambientes.objects.all()
     serializer_class = AmbienteSerializer
     pagination_class = MyLimitOffsetPagination
-    permission_classes = [IsAmbiente] 
+    permission_classes = [IsAuthenticated] 
 
 
 @api_view(['POST'])
@@ -71,7 +69,7 @@ class HistoricoList(ListAPIView):
     queryset = Historico.objects.all()
     serializer_class = HistoricoSerializer
     pagination_class = MyLimitOffsetPagination
-    permission_classes = [IsHistorico]
+    permission_classes = [IsAuthenticated]
 
 @api_view(['POST'])
 def createHistorico(request):
@@ -107,7 +105,7 @@ class SensorList(ListAPIView):
     queryset = Sensores.objects.all()
     serializer_class = SensorSerializer
     pagination_class = MyLimitOffsetPagination
-    permission_classes = [IsSensor]
+    permission_classes = [IsAuthenticated]
 
 
 @api_view(['POST'])
@@ -149,14 +147,14 @@ class CustomTokenRefreshView(TokenRefreshView): # Esse método é responsável p
 class RegisterView(APIView): # Esse método, permite que os novos usuários se registrem a partir da permissions classes
     permission_classes = [AllowAny]
 
-def authenticationUser(request):
-    serializer = UsuarioCadastro(data= request.data)
-    if serializer.is_valid():
-        user = serializer.save()
-        if user:
-            json = serializer.data
-            return Response(json, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    def authenticationUser(request):
+        serializer = UsuarioCadastro(data= request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            if user:
+                json = serializer.data
+                return Response(json, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class ProtectedView(APIView):
     permission_classes = [IsAuthenticated]

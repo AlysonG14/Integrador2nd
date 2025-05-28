@@ -11,7 +11,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['email'] = user.email
-        token['roles'] = list(user.groups.values_list('nome', flat=True)) # Adiciona mais reivindicações, ou seja, permite que você adicione funções de usuário 
+        token['roles'] = list(user.groups.values_list('name', flat=True)) # Adiciona mais reivindicações, ou seja, permite que você adicione funções de usuário 
         return token
     
 class CustomUsuarioCadastrado(serializers.ModelSerializer):
@@ -19,16 +19,18 @@ class CustomUsuarioCadastrado(serializers.ModelSerializer):
 
     class Meta:
         model = UsuarioCadastro
-        fields = ('nome', 'username', 'email', 'idade')
+        fields = ('name', 'username', 'email', 'idade')
 
     def create(self, validated_data):
         user = UsuarioCadastro.objects.create_user(
             email=validated_data['email'],
-            nome=validated_data['nome'],
+            name=validated_data['nome'],
             username=validated_data['username'],
             idade=validated_data['idade']
         )
         return user
+    
+# Vamos criar um serializer, com três classes da models, para validar os dados em JSON
 
 class SensorSerializer(serializers.ModelSerializer):
     class Meta:

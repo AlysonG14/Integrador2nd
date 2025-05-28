@@ -115,9 +115,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'smart_city',
         'USER': 'root',
-        'PASSWORD': 'Alyson@@@123321...',
-        'HOST': 'localhost',
-        'PORT': '3307'
+        'PASSWORD': 'senai',
+        'HOST': '127.0.0.1',
+        'PORT': '3306'
     }
 }
 
