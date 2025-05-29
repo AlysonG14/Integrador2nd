@@ -1,21 +1,26 @@
-from django.shortcuts import render, get_object_or_404
+import pandas as pd
+from datetime import datetime
+from django.http import HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
+from django.contrib import messages
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
-from rest_framework import status
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import (Ambientes, 
                      Historico, 
-                     Sensores)
+                     Sensores,
+                     UploadFileForms)
 from .serializers import (AmbienteSerializer,
                           HistoricoSerializer,
                           SensorSerializer)
 from .paginations import MyLimitOffsetPagination
 from .serializers import CustomTokenObtainPairSerializer, UsuarioCadastro
-from rest_framework.views import APIView
 
 # Create your views here.
 
@@ -23,7 +28,15 @@ from rest_framework.views import APIView
 def apiOverview(request):
     api_urls = {
         'all_itens': '/',
-        ''
+        'Lista de Ambiente': '/ambiente/',
+        'Criação de Ambiente': '/ambiente/criar/',
+        'Detalhes do Ambiente': '/ambiente/<int:pk>',
+        'Lista de Histórico': '/historico/',
+        'Criação de Histórico': '/historico/criar/',
+        'Detalhes do Histórico': '/historico/<int:pk>',
+        'Lista de Sensores': '/sensor/',
+        'Criação de Sensor': '/sensor/criar',
+        'Detalhes do Sensorf': '/sensor/<int:pk>'
     }
 
     return Response(api_urls)
@@ -62,8 +75,30 @@ def ambienteDetail(request, pk):
         
     elif request.method == 'DELETE':
             ambiente.delete()
-            Response('Ambiente excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
-            return Response('Ambiente não encontrado', status=status.HTTP_404_NOT_FOUND)
+            return Response('Ambiente excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
+    
+def upload_file_ambiente(request):
+    if request.method == 'POST':
+        form = UploadFileForms(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['file']
+            df = pd.read_excel(file)
+            for _, row in df.iterrows():
+                ambiente, created = Ambientes.objects.get_or_create(
+                    sig=row['sig'],
+                    descricao=row['descricao'],
+                    ni=row['ni'],
+                    responsavel=row['responsavel']
+                )
+                if created:
+                    messages.success(request, f'Importado com sucesso {ambiente.sig}')
+                else:
+                    messages.warning(request, f'{ambiente.sig} existe!')
+            return redirect('upload_file_ambiente')
+    else:
+        form = UploadFileForms
+    return render(request, 'smart_city/importar_ambiente.html', {'form' : form})
+
 
 class HistoricoList(ListAPIView):
     queryset = Historico.objects.all()
@@ -98,8 +133,29 @@ def historicoDetail(request, pk):
         
     elif request.method == 'DELETE':
             historico.delete()
-            Response('Histórico excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
-            return Response('Histórico não encontrado!', status=status.HTTP_404_NOT_FOUND)
+            return Response('Histórico excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
+    
+def upload_file_historico(request):
+    if request.method == 'POST':
+        form = UploadFileForms(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['file']
+            df = pd.read_excel(file)
+            for __, row in df.iterrows():
+                historico, created = Historico.objects.get_or_create(
+                    sensor=row['sensor'],
+                    ambiente=row['ambiente'],
+                    valor=row['valor'],
+                    timestamp=datetime.strptime(row['timestamp'], "%Y-%m-%d %H:%M:%S")
+                )
+                if created:
+                    messages.success(request, f'Importado com Sucesso {historico.sensor}')
+                else:
+                    messages.warning(request, f'{historico.sensor} existe!')
+            return redirect('upload_file_historico')
+    else:
+        form = UploadFileForms
+    return render(request, 'smart_city/importar_historico.html', {'form': form})
 
 class SensorList(ListAPIView):
     queryset = Sensores.objects.all()
@@ -135,9 +191,34 @@ def sensorDetail(request, pk):
         
     elif request.method == 'DELETE':
             sensor.delete()
-            Response('Sensor excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
-            return Response('Sensor não encontrado', status=status.HTTP_404_NOT_FOUND)
+            return Response('Sensor excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
+
+def upload_sensores_file(request):
+    if request.method == 'POST':
+        form = UploadFileForms(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['file']
+            df = pd.read_excel(file)
+            for __, row in df.iterrows():
+                sensor, created = Sensores.objects.get_or_create(
+                    sensor=row['sensor'],
+                    mac_address=row['mac_address'],
+                    unidade_medida=row['unidade_medida'],
+                    latitude=row['latitude'],
+                    longitude=row['longitude'],
+                    status=row['status']
+                )
+                if created:
+                    messages.success(request, f'Importado com Sucesso {sensor.sensor}')
+                else:
+                    messages.warning(request, f'{sensor.sensor} não Existe')
+
+            return redirect('upload_sensores_file')
+    else:
+        form = UploadFileForms
+    return render(request, 'smart_city/importar_sensores.html', {'form': form})
     
+
 class CustomTokenObtainPairSerializer(TokenObtainPairView): # Esse método manipula uma criação de tokens de acesso ao login
     serializer_class = CustomTokenObtainPairSerializer
 
@@ -147,7 +228,7 @@ class CustomTokenRefreshView(TokenRefreshView): # Esse método é responsável p
 class RegisterView(APIView): # Esse método, permite que os novos usuários se registrem a partir da permissions classes
     permission_classes = [AllowAny]
 
-    def authenticationUser(request):
+    def post(self, request):
         serializer = UsuarioCadastro(data= request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -161,3 +242,4 @@ class ProtectedView(APIView):
 
     def get(self, request):
         return Response({'message':'This field is protected.'})
+

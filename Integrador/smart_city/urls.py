@@ -17,7 +17,9 @@ urlpatterns = [
     path('api/token/', CustomTokenObtainPairSerializer.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/register/', RegisterView.as_view(), name='register'),
-    path('api/token/protected/', ProtectedView.as_view(), name='protected')
+    path('api/token/protected/', ProtectedView.as_view(), name='protected'),
+    path('api/upload/ambiente/', views.upload_file_ambiente, name='Importando Dados - Ambiente'),
+    path('api/upload/historico/', views.upload_file_historico, name='Importando Dados - Histórico')
     
 
 ]
