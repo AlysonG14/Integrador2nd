@@ -243,3 +243,17 @@ class ProtectedView(APIView):
     def get(self, request):
         return Response({'message':'This field is protected.'})
 
+
+def export_smartcity_to_excel(request):
+    ambiente = pd.DataFrame(list(Ambientes.objects.all().values()))
+    historico = pd.DataFrame(list(Historico.objects.all().values()))
+    sensor = pd.DataFrame(list(Sensores.objects.all().values()))
+
+    df = pd.DataFrame(())
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=smartcity.xlsx'
+
+    df.to_excel(response, index=False, engine='openpyxl')
+
+    return Response
