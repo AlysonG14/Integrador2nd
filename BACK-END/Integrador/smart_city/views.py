@@ -257,3 +257,4 @@ def export_smartcity_to_excel(request):
     df.to_excel(response, index=False, engine='openpyxl')
 
     return Response
+
