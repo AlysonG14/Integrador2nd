@@ -28,8 +28,9 @@ export function Cadastro(){
             <div className={styles.nameIcon}>
                     <h1 className={styles.title}>Login</h1>
                 </div>
+                <hr/>
                     <div className={styles.register}>   
-                    <p className={styles.title}> <BsPersonCircle size={'40'} className={styles.icon} />
+                    <p className={styles.titleRegister}> <BsPersonCircle size={'40'} className={styles.icon} />
                     Email </p>
 
                     <form
@@ -43,7 +44,7 @@ export function Cadastro(){
                         </div>
                         <input
                             {...register('email')}
-                            placeholder="E-mail"
+                            placeholder="Enter email"
                             className={styles.field}>
                             </input>
 
@@ -51,9 +52,7 @@ export function Cadastro(){
 
                 </div>
                     </form>
-
-
-                    <p className={styles.title}> <FaKey size={'40'} className={styles.icon} />
+                    <p className={styles.titleRegister}> <FaKey size={'40'} className={styles.icon} />
                     Password </p>
                     <form
                         onSubmit={handleSubmit(autenticarUsuario)}
@@ -65,13 +64,17 @@ export function Cadastro(){
                         </div>
                         <input
                             {...register('senha')}
-                            placeholder="Senha"
+                            placeholder="Enter password"
                             className={styles.field}>
                         </input>
 
                         <button to={'/inicial'}
                             className={styles.button}>Enter
                         </button>
+                        <br/>
+                        <hr/>
+
+                        <img src="images/Component 1.png" className={styles.logo} />
 
                     </form>
 
