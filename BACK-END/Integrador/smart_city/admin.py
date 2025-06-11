@@ -19,4 +19,4 @@ class AmbienteAdmin(admin.ModelAdmin):
 
 @admin.register(Historico)
 class HistoricoAdmin(admin.ModelAdmin):
-    fields = ('sensor', 'ambiente', 'observacoes') # Pega os campos necessários do modelos
+    fields = ('sensor', 'ambiente', 'valor', 'timestamp', 'observacoes') # Pega os campos necessários do modelos

@@ -47,16 +47,15 @@ class HistoricoSerializer(serializers.ModelSerializer):
 # Payload -> É a parte que contém os dados válidos de um usuário registrado no Banco de Dados apartir de Login/Cadastro
 
 # Define uma classe onde obtém o token padrão do SimpleJWT, 
-# adicionando o email do usuário ao token,
-# adiciona a lista de grupos.
-
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
-        token = super().get_token(user)
+        # adicionando o email do usuário ao token,
+        token = super().get_token(user) 
         token['email'] = user.email
+        # adiciona a lista de grupos.
         token['roles'] = list(user.groups.values_list('name', flat=True)) # Adiciona mais reivindicações, ou seja, permite que você adicione funções usuário 
-        return token
+        return token # retorna o token
     
 # Serializer para cadastro de usuário, incluindo validação e criação
     

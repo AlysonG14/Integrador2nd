@@ -1,3 +1,6 @@
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 from django.contrib import admin
 from django.urls import path
 from .  import views
@@ -5,6 +8,16 @@ from .views import (CustomTokenObtainPairView, # View para obter token JWT perso
 CustomTokenRefreshView, # View para atualizaro o token JWT
 RegisterView, # View para registrar novo usuário
 ProtectedView) # View protegida que requer autenticação JWT
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title='API Upload Sensores',
+        default_version='v1',
+        description='Upload de arquivos Excel com Sensores',
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny]
+)
 
 urlpatterns = [
 
@@ -30,9 +43,11 @@ urlpatterns = [
 
     # URLs para upload de de dados via APIs, utilizando a importação de dados do Excel (.xlsx ou .csv)
 
-    path('api/upload/sensores/', views.upload_sensores_api, name='Importando Dados - Sensores'), # Importando Sensores
-    path('api/upload/ambiente/', views.upload_ambiente_api, name='Importando Dados - Ambiente'), # Importando Ambientes
-    path('api/upload/historico/', views.upload_historico_api, name='Importando Dados - Histórico') # Importando Históricos
-    
+    path('api/upload/sensores/', views.upload_sensores_api, name='upload_sensores'), # Importando Sensores
+    path('api/upload/ambiente/', views.upload_ambiente_api, name='upload_ambientes'), # Importando Ambientes
+    path('api/upload/historico/', views.upload_historico_api, name='upload_historicos'), # Importando Históricos
 
+    # Swagger
+
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
 ]

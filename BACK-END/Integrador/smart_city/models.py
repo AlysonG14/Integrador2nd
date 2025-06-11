@@ -9,28 +9,44 @@ from django_filters import rest_framework as filters
 # Define os tipos possíveis de sensores (choices para o campo sensor)
 
 TIPOS_SENSORES = [
-    ('L', 'Luminosidade'),
-    ('C', 'Contador'),
-    ('T', 'Temperatura'),
-    ('U', 'Umidade'),
+    ('Luminosidade', 'Luminosidade'),
+    ('Contador', 'Contador'),
+    ('Temperatura', 'Temperatura'),
+    ('Umidade', 'Umidade'),
+]
+
+# Define o 'STATUS' do sensor para mostrar se está ativo ou inativo
+
+STATUS = [
+    ('Ativo', 'Ativo'),
+    ('Inativo', 'Inativo')
+]
+
+# Define tipo de unidade do sensor
+
+TIPO_UNIDADE = [
+    ('C°', '°C'),
+    ('%', '%'),
+    ('uni', 'uni'),
+    ('lux', 'lux')
 ]
 
 # Aqui vai ser o campo do modelo Sensors
 
 class Sensores(models.Model):
-    sensor = models.CharField(max_length=1, choices=TIPOS_SENSORES, null=True, blank=True)
-    mac_address = models.CharField(max_length=255, null=True, blank=True, unique=True)
-    unidade_medida = models.CharField(max_length=255, null=True, blank=True)
+    sensor = models.CharField(max_length=12, choices=TIPOS_SENSORES, null=True, blank=True)
+    mac_address = models.CharField(max_length=255, null=True, blank=True)
+    unidade_medida = models.CharField(max_length=3, choices=TIPO_UNIDADE, null=True, blank=True)
     valor = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-    status = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=8, choices=STATUS, null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True)
 
 # Campo de Nome de admim, para identificação simples
 
     def __str__(self):
-        return f'{self.sensor}'
+        return f'{self.sensor} - {self.mac_address}'
     
     class Meta:
         verbose_name = 'sensor'
@@ -47,7 +63,7 @@ class Ambientes(models.Model):
     # Define o nome do campo de admin, para uma identificação simples
 
     def __str__(self):
-        return f'{self.ni}' # Exibe o NI do ambiente como o principal identificação simples
+        return f'{self.descricao}' # Exibe a 'descricao' do ambiente como o principal identificação simples
     
     class Meta:
         verbose_name = 'ambiente'
@@ -56,16 +72,16 @@ class Ambientes(models.Model):
     # Aqui vai ser o campo dos modelos de Histórico (onde, vai validar as chaves primárias para o campo de Sensores e Ambientes)
 
 class Historico(models.Model):
-    sensor = models.ForeignKey('Sensores', on_delete=models.CASCADE, null=True, blank=True) # Valida para relacionar as duas tabelas
-    ambiente = models.ForeignKey('Ambientes', on_delete=models.CASCADE, null=True, blank=True)
-    valor = models.BigIntegerField()
+    sensor = models.ForeignKey('Sensores', on_delete=models.CASCADE, null=True, blank=True) # Valida para relacionar a tabela 'sensor'
+    ambiente = models.ForeignKey('Ambientes', on_delete=models.CASCADE, null=True, blank=True) # Valida para relacionar a tabela 'ambiente'
+    valor = models.IntegerField(null=False, blank=False)
     timestamp = models.DateTimeField()
     observacoes = models.TextField(max_length=300, null=True, blank=True)
 
     # Campo para identificação simples
 
     def __str__(self):
-        return f'{self.sensor}'
+        return f'{self.sensor} - {self.ambiente}'
     
     class Meta:
         verbose_name = 'historico'
@@ -83,15 +99,15 @@ class HistoricoFilter(filters.FilterSet):
 # Define os tipos possíveis de sensores (choices para o campo do Usuário Cadastrado)
 
 DADOS_SENSORES = [
-    ('S', 'Sensores'),
-    ('A', 'Ambientes'),
-    ('H', 'Histórico')
+    ('Sensores', 'Sensores'),
+    ('Ambientes', 'Ambientes'),
+    ('Historico', 'Historico')
 ]
 
 # Campo necessários para o supervisor realizar o cadastramento do sistema de Smart City, utilizando o AbstractUser
 
 class UsuarioCadastro(AbstractUser):
-    dados_sensores = models.CharField(max_length=1, choices=DADOS_SENSORES, null=True, blank=True)
+    dados_sensores = models.CharField(max_length=12, choices=DADOS_SENSORES, null=True, blank=True)
     nome = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(unique=True, null=True)
     idade = models.PositiveIntegerField(null=True, blank=True)
