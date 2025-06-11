@@ -24,7 +24,7 @@ class CustomUsuarioCadastrado(serializers.ModelSerializer):
     def create(self, validated_data):
         user = UsuarioCadastro.objects.create_user(
             email=validated_data['email'],
-            name=validated_data['nome'],
+            name=validated_data['name'],
             username=validated_data['username'],
             idade=validated_data['idade']
         )
@@ -39,10 +39,19 @@ class SensorSerializer(serializers.ModelSerializer):
         read_only_fields = ['id'] # isso permite que o id seja sobrescrito em requisições POST ou PATCH
 
 class HistoricoSerializer(serializers.ModelSerializer):
+    data = serializers.SerializerMethodField()
+    hora = serializers.SerializerMethodField()
+
     class Meta:
         model = Historico
         fields = '__all__'
         read_only_fields = ['id']
+
+    def get_data(self, obj):
+        return obj.timestamp.date()
+
+    def get_hora(self, obj):
+        return obj.timestamp.time().strftime('%H:%M:%S')
 
 class AmbienteSerializer(serializers.ModelSerializer):
     class Meta:

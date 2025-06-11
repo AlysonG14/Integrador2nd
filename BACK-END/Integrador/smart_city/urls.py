@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from .  import views
-from .views import CustomTokenObtainPairSerializer, CustomTokenRefreshView, RegisterView, ProtectedView
+from .views import CustomTokenObtainPairView, CustomTokenRefreshView, RegisterView, ProtectedView
 
 urlpatterns = [
     path('', views.apiOverview, name='Home'),
@@ -14,12 +14,13 @@ urlpatterns = [
     path('sensor/criar/', views.createSensor, name='Criar Sensores'),
     path('sensor/', views.SensorList.as_view(), name='Lista de Sensores'),
     path('sensor/criar/<int:pk>/', views.sensorDetail, name='Detalhes de Sensores'),
-    path('api/token/', CustomTokenObtainPairSerializer.as_view(), name='token_obtain_pair'),
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/register/', RegisterView.as_view(), name='register'),
     path('api/token/protected/', ProtectedView.as_view(), name='protected'),
-    path('api/upload/ambiente/', views.upload_file_ambiente, name='Importando Dados - Ambiente'),
-    path('api/upload/historico/', views.upload_file_historico, name='Importando Dados - Histórico')
+    path('api/upload/sensores/', views.upload_sensores_api, name='Importando Dados - Sensores'),
+    path('api/upload/ambiente/', views.upload_ambiente_api, name='Importando Dados - Ambiente'),
+    path('api/upload/historico/', views.upload_historico_api, name='Importando Dados - Histórico')
     
 
 ]

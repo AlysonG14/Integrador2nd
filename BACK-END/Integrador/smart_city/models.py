@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django import forms
+from django_filters import rest_framework as filters
 
 # Create your models here.
 
@@ -56,6 +57,13 @@ class Historico(models.Model):
     class Meta:
         verbose_name = 'historico'
         verbose_name_plural = 'Históricos'
+
+class HistoricoFilter(filters.FilterSet):
+    data = filters.DateFilter(field_name='timestamp', lookup_expr='date')
+
+    class Meta:
+        model = Historico
+        fields = ['data']
 
 
 DADOS_SENSORES = [
