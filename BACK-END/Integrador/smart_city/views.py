@@ -5,7 +5,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
 from rest_framework import status
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
@@ -37,7 +38,7 @@ def apiOverview(request):
         'Detalhes do Histórico': '/historico/<int:pk>',
         'Lista de Sensores': '/sensor/',
         'Criação de Sensor': '/sensor/criar',
-        'Detalhes do Sensorf': '/sensor/<int:pk>'
+        'Detalhes do Sensor': '/sensor/<int:pk>'
     }
 
     return Response(api_urls)
