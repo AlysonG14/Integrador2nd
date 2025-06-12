@@ -7,13 +7,14 @@ from .  import views
 from .views import (CustomTokenObtainPairView, # View para obter token JWT personalizado
 CustomTokenRefreshView, # View para atualizaro o token JWT
 RegisterView, # View para registrar novo usuário
-ProtectedView) # View protegida que requer autenticação JWT
+ProtectedView, # View protegida que requer autenticação JWT
+export_smartcity_to_excel) # View para exportação de dados
 
 schema_view = get_schema_view(
     openapi.Info(
-        title='API Upload Sensores',
+        title='Smart City',
         default_version='v1',
-        description='Upload de arquivos Excel com Sensores',
+        description='Sistema integrado para uma cidade inteligente.',
     ),
     public=True,
     permission_classes=[permissions.AllowAny]
@@ -46,6 +47,10 @@ urlpatterns = [
     path('api/upload/sensores/', views.upload_sensores_api, name='upload_sensores'), # Importando Sensores
     path('api/upload/ambiente/', views.upload_ambiente_api, name='upload_ambientes'), # Importando Ambientes
     path('api/upload/historico/', views.upload_historico_api, name='upload_historicos'), # Importando Históricos
+
+    # Exportação de Dados
+
+    path('api/exportar/', export_smartcity_to_excel, name='exportar excel'),
 
     # Swagger
 

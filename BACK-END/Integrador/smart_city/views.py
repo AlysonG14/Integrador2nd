@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema
@@ -134,7 +135,7 @@ def upload_sensores_api(request):
         df = pd.read_excel(file)
 
         # Verifica colunas obrigatórias, se não, significa que a coluna obrigatória está em falta
-        required_columns = {'mac_address', 'sensor', 'unidade_medida', 'longitude', 'status'}
+        required_columns = {'sensor', 'mac_address', 'unidade_medida', 'latitude', 'longitude', 'status'}
         if not required_columns.issubset(df.columns): # Issubset -> Ferramenta robusta para verificar a relação de subconjuntos entre conjuntos.
             missing = required_columns - set(df.columns)
             return Response(
@@ -153,23 +154,18 @@ def upload_sensores_api(request):
                 row = row.where(pd.notnull(row), None) # Substitua valores NaN por None
 
                 # Campos que serão atualizados ou definidos, abaixo:
-                _, created = Sensores.objects.update_or_create(
-                    mac_address=row['mac_address'],
-                    defaults={
-                        'sensor': row['sensor'],
-                        'unidade_medida': row['unidade_medida'],
-                        'latitude': row.get('latitude'),
-                        'longitude': row['longitude'],
-                        'status': row['status'],
-                        'timestamp': row.get('timestamp', datetime.now())
-                    }
-                )
-                if created:
-                    created_count += 1 # Incrementar o contador de novos sensores criados.
-                else:
-                    duplicates += 1 # Incrementa o contador de sensores atualizados
+                Sensores.objects.create(
+                        mac_address=row['mac_address'],
+                        sensor= row['sensor'],
+                        unidade_medida= row['unidade_medida'],
+                        latitude= row.get('latitude'),
+                        longitude= row['longitude'],
+                        status= row['status'],
+                        timestamp= row.get('timestamp', datetime.now())
+                )   
+                created_count += 1 # Incrementar o contador de novos sensores criados.
 
-            except Exception as e: # 
+            except IntegrityError: # 
                 errors += 1
                 continue
 
@@ -257,7 +253,7 @@ def ambienteDetail(request, pk):
             'file',
             in_=openapi.IN_FORM,
             type=openapi.TYPE_FILE,
-            description='Arquivo Excel (.xlxs ou .csv)'
+            description='Arquivo Excel (.xlsx ou .csv)'
         )
     ]
 )
@@ -283,7 +279,7 @@ def upload_ambiente_api(request):
 
         df = pd.read_excel(file)
 
-        required_columns = {'sig', 'descricao'}
+        required_columns = {'sig', 'descricao', 'ni', 'responsavel'}
         if not required_columns.issubset(df.columns):
             missing = required_columns - set(df.columns)
             return Response(
@@ -292,23 +288,24 @@ def upload_ambiente_api(request):
             )
 
         created_count = 0
-        duplicates_count = 0
+        duplicates = 0
+        errors = 0
 
         for _, row in df.iterrows():
-            row = row.where(pd.notnull(row), None)
+            try:
+                row = row.where(pd.notnull(row), None)
 
-            _, created = Ambientes.objects.update_or_create(
-                sig=row['sig'],
-                defaults={
-                    'descricao': row['descricao'],
-                    'ni': row.get('ni'),
-                    'responsavel': row.get('responsavel')
-                }
-            )
-            if created:
-                created_count += 1
-            else:
-                duplicates_count += 1
+                Ambientes.objects.create(
+                        sig=row['sig'],
+                        descricao= row['descricao'],
+                        ni= row.get('ni'),
+                        responsavel= row.get('responsavel')
+                )
+                created_count += 1 # Incrementar o contador de novos sensores criados.
+
+            except IntegrityError: # 
+                errors += 1
+                continue
 
         return Response(
             {
@@ -316,7 +313,8 @@ def upload_ambiente_api(request):
                 'stats': {
                     'total_rows': len(df),
                     'created': created_count,
-                    'updated': duplicates_count
+                    'updated': duplicates,
+                    'errors': errors
                 }
             },
             status=status.HTTP_201_CREATED
@@ -428,63 +426,85 @@ def upload_historico_api(request):
         return Response(
             {'error': 'Nenhum arquivo enviado. Use o campo "file" para enviar o arquivo Excel.'},
             status=status.HTTP_400_BAD_REQUEST
-        )   
-
+        )
     try:
         file = request.FILES['file']
-        if not file.name.endswith((".xlsx", ".csv")):
+        if not file.name.endswith(('.xlsx', '.csv')):
             return Response(
-                {'error': 'Formato inválido'},
+                {'error': 'Formato de arquivo inválido. Envie um arquivo Excel (.xlsx ou .csv)'},
                 status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
             )
+
         df = pd.read_excel(file)
-        required_columns = {'sensor_id', 'ambiente_id', 'valor', 'timestamp'}
+
+        required_columns = {'sensor', 'ambiente', 'valor', 'timestamp'}
         if not required_columns.issubset(df.columns):
             missing = required_columns - set(df.columns)
             return Response(
                 {'error': f'Colunas obrigatórias faltando: {", ".join(missing)}'},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
-        
+
         created_count = 0
-        error_count = 0
-        
-        for __, row in df.iterrows():
+        duplicates = 0
+        errors = 0
+
+        for _, row in df.iterrows():
             try:
                 row = row.where(pd.notnull(row), None)
-                timestamp = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
+                sensor_id = int(row['sensor'])
+                ambiente_id = int(row['ambiente'])
+
+                sensor = Sensores.objects.filter(id=sensor_id).first()
+                ambiente = Ambientes.objects.filter(id=ambiente_id).first()
+
+                if not sensor:
+                    print(f"Sensor não encontrado: '{row['sensor']}'")
+                if not ambiente:
+                    print(f"Ambiente não encontrado: '{row['ambiente']}'")
+
+                if not sensor or not ambiente:
+                    errors += 1
+                    continue
 
                 Historico.objects.create(
-                    sensor_id=row['sensor_id'],
-                    ambiente_id=row['ambiente_id'],
-                    valor=row['valor'],
-                    timestamp=timestamp,
-                    observacoes=row.get('observacoes', '')
+                        sensor=sensor,
+                        ambiente=ambiente,
+                        valor=row['valor'],
+                        timestamp=pd.to_datetime(row['timestamp']),
+                        observacoes=row.get('observacoes') or ''
                 )
-                created_count += 1
+                created_count += 1 # Incrementar o contador de novos sensores criados.
 
             except Exception as e:
-                error_count += 1
+                print(f'Erro ao importar linha: {e}')
+                errors += 1
                 continue
 
         return Response(
             {
-                'message': 'Dados históricos importados',
+                'message': f'Importação concluído com sucesso!',
                 'stats': {
+                    'total_rows': len(df),
                     'created': created_count,
-                    'errors': error_count,
-                    'total': len(df)
+                    'updated': duplicates,
+                    'errors': errors
                 }
             },
             status=status.HTTP_201_CREATED
         )
 
+    except pd.errors.EmptyDataError:
+        return Response(
+            {'error': 'O arquivo excel está vazio'},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+
     except Exception as e:
         return Response(
-            {'error': f'Erro ao servidor: {str(e)}' },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            {'error': f'Erro ao processar arquivo: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
         )
-    
 
 class CustomTokenObtainPairView(TokenObtainPairView): # Esse método manipula uma criação de tokens de acesso ao login
     serializer_class = CustomTokenObtainPairSerializer
@@ -516,11 +536,12 @@ def export_smartcity_to_excel(request):
     historico = pd.DataFrame(list(Historico.objects.all().values()))
     sensor = pd.DataFrame(list(Sensores.objects.all().values()))
 
-    df = pd.DataFrame(())
+    if 'timestamp' in historico.columns:
+        historico['timestamp'] = pd.to_datetime(historico['timestamp']).dt.tz_localize(None)
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
+    )
     response['Content-Disposition'] = 'attachment; filename=smartcity.xlsx'
 
     with pd.ExcelWriter(response, engine='openpyxl') as writer:
