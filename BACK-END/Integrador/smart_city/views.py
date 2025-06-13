@@ -550,4 +550,3 @@ def export_smartcity_to_excel(request):
         sensor.to_excel(writer, sheet_name='Sensores', index=False)
 
     return response
-
