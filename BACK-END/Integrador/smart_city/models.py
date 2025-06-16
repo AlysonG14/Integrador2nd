@@ -121,5 +121,7 @@ class UsuarioCadastro(AbstractUser):
     def __str__(self):
         return self.email
     
+# Uma classe para importação de dados de todos os registros
+    
 class UploadFileForms(forms.Form):
     file = forms.FileField()

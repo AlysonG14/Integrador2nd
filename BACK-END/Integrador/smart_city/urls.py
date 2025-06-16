@@ -3,12 +3,14 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.contrib import admin
 from django.urls import path
-from .  import views
-from .views import (CustomTokenObtainPairView, # View para obter token JWT personalizado
-CustomTokenRefreshView, # View para atualizaro o token JWT
-RegisterView, # View para registrar novo usuário
-ProtectedView, # View protegida que requer autenticação JWT
-export_smartcity_to_excel) # View para exportação de dados
+from smart_city.views import CustomTokenObtainPairView # View para obter token JWT personalizado
+from smart_city.views import CustomTokenRefreshView # View para atualizaro o token JWT
+from smart_city.views import RegisterView # View para registrar novo usuário
+from smart_city.views import ProtectedView # View protegida que requer autenticação JWT
+from smart_city.views import ExportSensoresFile # View para exportação de dados Sensores
+from smart_city.views import ExportAmbientesFile # View para exportação de dados Ambientes
+from smart_city.views import ExportHistoricoFile # View para exportação de dados Históricos
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -26,14 +28,11 @@ urlpatterns = [
     
     path('', views.apiOverview, name='Home'), # Rota raíz para visão geral da API 
     path('sensor/', views.SensorList.as_view(), name='Lista de Sensores'), # Rota para listar todos os sensores
-    path('sensor/<int:pk>/', views.sensorDetail, name='Detalhes de Sensores'), # Rota para detalhar o histórico
-    path('sensor/criar/', views.createSensor, name='Criar Sensores'), # Rota para criar novo sensor
+    path('sensor/<int:pk>/', views.SensorViewDetail.as_view(), name='Detalhes de Sensores'), # Rota para detalhar o histórico
     path('ambiente/', views.AmbienteList.as_view(), name='Lista de Ambiente'), # Rota para listar todos os ambientes
-    path('ambiente/<int:pk>/', views.ambienteDetail, name='Detalhes do Ambiente'), # Rota para detalhar o ambiente
-    path('ambiente/criar/', views.createAmbiente, name='Criar Ambiente'), # Rota para criar novo ambiente
+    path('ambiente/<int:pk>/', views.AmbienteDetailView.as_view(), name='Detalhes do Ambiente'), # Rota para detalhar o ambiente
     path('historico/', views.HistoricoList.as_view(), name='Lista de Históricos'), # Rota para listar todos os históricos
-    path('historico/<int:pk>/', views.historicoDetail, name='Detalhes de Históricos'), # Rota para detalhar o histórico
-    path('historico/criar/', views.createHistorico, name='Criar Histórico'), # Rota para criar novo histórico
+    path('historico/<int:pk>/', views.HistoricoViewDetail.as_view(), name='Detalhes de Históricos'), # Rota para detalhar o histórico
 
     # URLs somente para o Usuário fazer o cadastramento do sistema
 
@@ -50,7 +49,9 @@ urlpatterns = [
 
     # Exportação de Dados
 
-    path('api/exportar/', export_smartcity_to_excel, name='exportar excel'),
+    path('api/exportar/Sensores', ExportSensoresFile.as_view(), name='exportar sensores'),
+    path('api/exportar/Ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'),
+    path('api/exportar/Históricos', ExportHistoricoFile.as_view(), name='exportar históricos'),
 
     # Swagger
 

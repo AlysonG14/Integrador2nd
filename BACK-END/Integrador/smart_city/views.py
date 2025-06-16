@@ -1,15 +1,17 @@
 import pandas as pd 
+import uuid
 from datetime import datetime
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes, permission_classes
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import SessionAuthentication
@@ -36,62 +38,43 @@ def apiOverview(request):
     api_urls = {
         'all_itens': '/',
         'Lista de Ambiente': '/ambiente/',
-        'Criação de Ambiente': '/ambiente/criar/',
         'Detalhes do Ambiente': '/ambiente/<int:pk>/',
         'Lista de Histórico': '/historico/',
-        'Criação de Histórico': '/historico/criar/',
         'Detalhes do Histórico': '/historico/<int:pk>/',
         'Lista de Sensores': '/sensor/',
-        'Criação de Sensor': '/sensor/criar/',
         'Detalhes do Sensor': '/sensor/<int:pk>/'
     }
 
     return Response(api_urls)
 
+
+
+                                            # 1. SENSORES 
+
+
+
+# --- CRUD SENSORES ---
+
 # Listagem paginada de Sensores, somente usuários autorizados podem acessar
-# Um serializer que formata API em json
-# Uma paginação da classe, para definir quantos APIs vão estar 
-# E uma permissão onde apenas o usuário pode autenticar a classe
 
-class SensorList(ListAPIView):
-    queryset = Sensores.objects.all()
-    serializer_class = SensorSerializer
-    pagination_class = MyLimitOffsetPagination
-    permission_classes = [IsAuthenticated]
-
-
-# Criação do Sensor via POST separado
-
-@api_view(['POST']) # Método POST -> Criar sensor
-def createSensor(request):
-    serializer = SensorSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class SensorList(ListCreateAPIView):
+    queryset = Sensores.objects.all() # Um qeuryset para listar as páginas de Sensores completos
+    serializer_class = SensorSerializer # Um serializer que formata API em json
+    pagination_class = MyLimitOffsetPagination # Uma paginação da classe, para definir quantos APIs vão estar 
+    permission_classes = [IsAuthenticated] # E uma permissão onde apenas o usuário pode autenticar a classe
 
 # Detalhes do Sensor, onde terá: Visualizar detalhe, atualização do sensor e deletar o sensor por ID
 
-@api_view(['GET', 'PATCH', 'DELETE'])
-def sensorDetail(request, pk):
-    sensor = get_object_or_404(Sensores, pk=pk)
+class SensorViewDetail(RetrieveUpdateDestroyAPIView):
+    queryset = Sensores.objects.all() # Um qeuryset para listar as páginas de Sensores completos usando: GET, PATCH, DELETE
+    serializer_class = SensorSerializer # # Um serializer que formata API em json
+    permission_classes = [IsAuthenticated] # E uma permissão onde apenas o usuário pode autenticar a classe
+    
+    
+# ---- IMPORTAÇÃO DE DADOS SENSORES ----
 
-    if request.method == 'GET': # Método Detalhes de cada sensor por ID
-        serializer = SensorSerializer(sensor)
-        return Response(serializer.data)
-        
-    elif request.method == 'PATCH': # Método PATCH -> Atualizar o sensor por ID
-        serializer = SensorSerializer(sensor, data= request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    elif request.method == 'DELETE': # Método DELETE -> Excluir o sensor por ID
-            sensor.delete()
-            return Response('Sensor excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
+
+# Importando e usando o Swagger para permitir que ele possa pegar o arquivo e importar
     
 @swagger_auto_schema(
     method='post',  
@@ -108,7 +91,7 @@ def sensorDetail(request, pk):
 # Upload de arquivo EXCEL ou CSV para importar sensores.
 
 @api_view(['POST']) # Criação para dar o upload do arquivo via POST
-@parser_classes([MultiPartParser])
+@parser_classes([MultiPartParser]) # É um método que vai aceitar as requisições dos 'upload de arquivos'
 @permission_classes([IsAuthenticated]) # Autenticar que apenas o usuário cadastrado pode alterar e mudar 
 
 # Criação de função para importar dados
@@ -137,12 +120,13 @@ def upload_sensores_api(request):
         # Verifica colunas obrigatórias, se não, significa que a coluna obrigatória está em falta
         required_columns = {'sensor', 'mac_address', 'unidade_medida', 'latitude', 'longitude', 'status'}
         if not required_columns.issubset(df.columns): # Issubset -> Ferramenta robusta para verificar a relação de subconjuntos entre conjuntos.
-            missing = required_columns - set(df.columns)
+            missing = required_columns - set(df.columns) # Uma variável para verificar quais colunas obrigatórios estão faltando
             return Response(
                 {'error': f'Colunas obrigatórias faltando: {", ".join(missing)}'},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY # Significa que ele vai fazer o servidor entender, mas não vai conseguir processar.
             )
 
+        # Cria as requisições para mostrar o status da importação, se foi criado, atualizado ou erros.
         created_count = 0
         duplicates = 0
         errors = 0
@@ -165,7 +149,8 @@ def upload_sensores_api(request):
                 )   
                 created_count += 1 # Incrementar o contador de novos sensores criados.
 
-            except IntegrityError: # 
+            except IntegrityError as e: # Essa parte é um bloco de tratamento de erros, vai usar para incrementar o loop que insere dados no banco
+                print(f"Erro ao integridade na linha {row}: {e}")
                 errors += 1
                 continue
 
@@ -200,51 +185,28 @@ def upload_sensores_api(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+
+                                                 # 2. AMBIENTE
+    
+# --- CRUD AMBIENTES ---
+
 # Listagem paginada de Ambiente, somente usuários autorizados podem acessar
-# Um serializer que formata API em json
-# Uma paginação da classe, para definir quantos APIs vão estar 
-# E uma permissão onde apenas o usuário pode autenticar a classe
 
-class AmbienteList(ListAPIView):
-    queryset = Ambientes.objects.all()
-    serializer_class = AmbienteSerializer
-    pagination_class = MyLimitOffsetPagination
-    permission_classes = [IsAuthenticated] 
+class AmbienteList(ListCreateAPIView):
+    queryset = Ambientes.objects.all() # Um qeuryset para listar as páginas de Ambientes completos
+    serializer_class = AmbienteSerializer # Um serializer que formata API em json
+    pagination_class = MyLimitOffsetPagination # Uma paginação da classe, para definir quantos APIs vão estar 
+    permission_classes = [IsAuthenticated] # E uma permissão onde apenas o usuário pode autenticar a classe
 
-# Criação de Ambiente via POST separado
 
-@api_view(['POST']) # Método POST -> Criar ambiente
-def createAmbiente(request):
-    serializer = AmbienteSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class AmbienteDetailView(RetrieveUpdateDestroyAPIView): # Detalhes do Ambiente, onde terá: Visualizar detalhe de cada ambiente, atualização do ambiente e deletar o ambiente por ID
+    queryset = Ambientes.objects.all() # Um qeuryset para listar as páginas de Ambiente completo usando: GET, PATCH, DELETE
+    serializer_classes = AmbienteSerializer # Um serializer que formata API em json
+    permission_classes = [IsAuthenticated] # E uma permissão para permitir que somente usuário cadastrado tem acessibilidade de alterar mudanças e autenticar a classe
 
-# Detalhes do Ambiente, onde terá: Visualizar detalhe de cada ambiente, atualização do ambiente e deletar o ambiente por ID
+# --- IMPORTAÇÃO DE DADOS AMBIENTES ---
 
-@api_view(['GET', 'PATCH', 'DELETE'])
-def ambienteDetail(request, pk):
-    ambiente = get_object_or_404(Ambientes, pk=pk)
-
-    if request.method == 'GET': # Método GET -> Pegar os detalhes de cada ambiente por ID
-        serializer = AmbienteSerializer(ambiente)
-        return Response(serializer.data)
-        
-    elif request.method == 'PATCH': # Método PATCH -> Atualizar o ambiente por ID
-        serializer = AmbienteSerializer(ambiente, data= request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    elif request.method == 'DELETE': # Método DELETE -> Deletar o ambiente por ID
-            ambiente.delete()
-            return Response('Ambiente excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
-
-# O schema do swagger
+# O schema do swagger -> Para permitir que ele vai importar os arquivos de Excel (.xslx ou .csv)
 
 @swagger_auto_schema(
     method='post',  
@@ -260,40 +222,54 @@ def ambienteDetail(request, pk):
 
 # Upload de arquivo EXCEL ou CSV para importar ambientes.
 
-@api_view(['POST'])
-@parser_classes([MultiPartParser])
-@permission_classes([IsAuthenticated])
+@api_view(['POST']) # Criação para dar o upload do arquivo via POST
+@parser_classes([MultiPartParser]) # É um método que vai aceitar as requisições dos 'upload de arquivos'
+@permission_classes([IsAuthenticated]) # Autenticar que apenas o usuário cadastrado pode alterar e mudar 
 def upload_ambiente_api(request):
-    if 'file' not in request.FILES:
+
+    # Criação de função para importar dados.
+
+    if 'file' not in request.FILES: # Verifica se o arquivo foi enviado, se não ele vai retornar a mensagem abaixo.
         return Response(
             {'error': 'Nenhum arquivo enviado. Use o campo "file" para enviar o arquivo Excel.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    try:
-        file = request.FILES['file']
+    try: # Um método para tentar o arquivo
+        file = request.FILES['file'] # Verifica se o arquivo é excel ou CSV, se não, ele vai retornar a mensagem abaixo.
         if not file.name.endswith(('.xlsx', '.csv')):
             return Response(
                 {'error': 'Formato de arquivo inválido. Envie um arquivo Excel (.xlsx ou .csv)'},
-                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE # Significa que o servidor se recusa a aceitar um tipo de mídia.
+
             )
+        
+        # Lê o arquivo com Pandas.
 
         df = pd.read_excel(file)
 
+
+        # Verifica colunas obrigatórias, se não, significa que a coluna obrigatória está em falta.
         required_columns = {'sig', 'descricao', 'ni', 'responsavel'}
-        if not required_columns.issubset(df.columns):
-            missing = required_columns - set(df.columns)
+        if not required_columns.issubset(df.columns): # Issubset -> Ferramenta robusta para verificar a relação de subconjuntos entre conjuntos.
+            missing = required_columns - set(df.columns) # Uma variável para verificar quais colunas obrigatórios estão faltando.
             return Response(
                 {'error': f'Colunas obrigatórias faltando: {", ".join(missing)}'},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY # Significa que ele vai fazer o servidor entender, mas não vai conseguir processar.
             )
+        
+        # Cria as requisições para mostrar o status da importação, se foi criado, atualizado ou erros.
 
         created_count = 0
         duplicates = 0
         errors = 0
 
-        for _, row in df.iterrows():
+        # Vai iterar linha à linha para criar ou atualizar sensores
+
+        for _, row in df.iterrows(): # Itera sobre cada linha do DateFrame carregado do arquivo Excel
             try:
-                row = row.where(pd.notnull(row), None)
+                row = row.where(pd.notnull(row), None) # Substitua valores NaN por None
+
+                # Campos que serão atualizados ou definidos, abaixo:
 
                 Ambientes.objects.create(
                         sig=row['sig'],
@@ -303,9 +279,12 @@ def upload_ambiente_api(request):
                 )
                 created_count += 1 # Incrementar o contador de novos sensores criados.
 
-            except IntegrityError: # 
+            except IntegrityError as e: # Essa parte é um bloco de tratamento de erros, vai usar para incrementar o loop que insere dados no banco
+                print(f"Erro ao integridade na linha {row}: {e}")
                 errors += 1
                 continue
+
+        # Retorna o Response para mostrar as estatísticas detalhadas, mensagem, quantas foram atualizados, criados e falharam.
 
         return Response(
             {
@@ -320,89 +299,84 @@ def upload_ambiente_api(request):
             status=status.HTTP_201_CREATED
         )
 
+
+    # Except que específica caso o arquivo esteja vazio.
     except pd.errors.EmptyDataError:
         return Response(
             {'error': 'O arquivo excel está vazio'},
             status=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
+    
 
+    # Except que expecífica caso o arquvo com erro.
     except Exception as e:
         return Response(
             {'error': f'Erro ao processar arquivo: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+
+                                               # 3. Histórico
+
+# --- CRUD de ListCreate do HISTÓRICO ---
 
 # Listagem paginada de Historico, somente usuários autorizados podem acessar
-# Um serializer que formata API em json
-# Uma paginação da classe, para definir quantos APIs vão estar 
-# E uma permissão onde apenas o usuário pode autenticar a classe
 
-class HistoricoList(ListAPIView):
-    queryset = Historico.objects.all()
-    serializer_class = HistoricoSerializer
-    pagination_class = MyLimitOffsetPagination
-    filter_backends = [DjangoFilterBackend]
-    permission_classes = [IsAuthenticated]
-    filterset_class = HistoricoFilter
+class HistoricoList(ListCreateAPIView):
+    queryset = Historico.objects.all() # Um queryset para listar todas as informações do Histórico
+    serializer_class = HistoricoSerializer # Um serializer que formata API em json
+    pagination_class = MyLimitOffsetPagination # Uma paginação da classe, para definir quantos APIs vão estar 
+    permission_classes = [IsAuthenticated] # Uma permissão onde apenas o usuário pode autenticar a classe
 
+    # --- FILTRO DE HISTÓRICO ---
+    # Para filtrar a página de HistoricoList
+
+    # Uma função de queryset para pegar as informações do Histórico e transformar ela em filtros pela busca de pesquisa poderosa!
     def get_queryset(self):
-        queryset = Historico.objects.all()
-        sensor_id = self.request.query_params.get('sensor_id')
-        tipo_sensor = self.request.query_params.get('tipo')
-        data = self.request.query_params.get('data')
-        sig = self.request.query_params.get('sig')
-        historico_id = self.request.query_params.get('historico_id')
+        queryset = Historico.objects.all() # Começa pegando todos os registros da tabela Histórico
+        sensor_id = self.request.query_params.get('sensor_id') # Filtra a URL dos ID de sensores
+        tipo_sensor = self.request.query_params.get('tipo') # Filtra a URL aos tipos de sensores
+        data = self.request.query_params.get('data') # Filtra a URL da data dos sensores
+        sig = self.request.query_params.get('sig') # Filtra a URL ao tipo 'SIG' dos sensores
+        historico_id = self.request.query_params.get('historico_id') # Filtra a URL para pegar o ID do histórico
 
+        # Se o sensor_id foi passado, então filtra os históricos daquele sensor
         if sensor_id:
             queryset = queryset.filter(sensor__id=sensor_id)
+
+        # Se o tipo de sensor foi passado, então filtra daquele que contém tipo de sensores, tipo: "temperatura"
 
         if tipo_sensor:
             queryset = queryset.filter(sensor__sensor__icontains=tipo_sensor)
 
+        # Se a data foi passado, então filtra a data específica do sensor
+
         if data:
             queryset = queryset.filter(timestamp__date=data)
+
+        # Se o tipo 'sig' foi passado, então vai filtrar esse tipo de "sig" no sensor
 
         if sig:
             queryset = queryset.filter(ambiente__sig__iexact=sig)
 
+        # Se o ID do histórico foi passado, então ele vai filtrar exatamente o ID do histórico
+
         if historico_id:
             queryset = queryset.filter(id=historico_id)
 
+        # Retorna a queryset filtrado de acordo com os parâmetros fornecidos
         return queryset
     
-# Criação de Histórico via POST separado
+# --- CRUD de GET, PATCH, DELETE --- 
 
-@api_view(['POST']) # Método POST -> Criação de Histórico
-def createHistorico(request):
-    serializer = HistoricoSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-# Detalhes do Ambiente, onde terá: Visualizar detalhe de cada ambiente, atualização do ambiente e deletar o ambiente por ID
+class HistoricoViewDetail(RetrieveUpdateDestroyAPIView):
+    queryset = Historico.objects.all() # Um queryset para listar todas as informações do Histórico, usando: GET, PATCH, DELETE
+    serializer_class = HistoricoSerializer # Um serializer que formata API em json
+    permission_classes = [IsAuthenticated] # E Uma paginação da classe, para definir quantos APIs vão estar 
 
-
-@api_view(['GET', 'PATCH', 'DELETE'])
-def historicoDetail(request, pk):
-    historico = get_object_or_404(Historico, pk=pk)
-
-    if request.method == 'GET': # Método GET -> Pegar os detalhes de cada histórico por ID
-        serializer = HistoricoSerializer(historico) 
-        return Response(serializer.data)
-        
-    elif request.method == 'PATCH': # Método PATCH -> Permite atualizar o histórico por ID
-        serializer = HistoricoSerializer(historico, data= request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    elif request.method == 'DELETE': # Método DELETE -> Exclua as informações do Histórico por ID
-            historico.delete()
-            return Response('Histórico excluído com sucesso!', status=status.HTTP_204_NO_CONTENT)
+# --- IMPORTAÇÃO DE DADOS HISTÓRICOS --- 
+    
+# O schema do swagger -> Para permitir que ele vai importar os arquivos de Excel (.xslx ou .csv)
     
 @swagger_auto_schema(
     method='post',  
@@ -417,55 +391,71 @@ def historicoDetail(request, pk):
 )
 
 # Upload de arquivo EXCEL ou CSV para importar históricos.
-
-@api_view(['POST'])
-@parser_classes([MultiPartParser])
-@permission_classes([IsAuthenticated])
+ 
+@api_view(['POST']) # Criação para dar o upload do arquivo via POST
+@parser_classes([MultiPartParser]) # É um método que vai aceitar as requisições dos 'upload de arquivos'
+@permission_classes([IsAuthenticated]) # Autenticar que apenas o usuário cadastrado pode alterar e mudar
 def upload_historico_api(request):
-    if 'file' not in request.FILES:
+
+    # Criação de função para importar dados.
+    if 'file' not in request.FILES: # Verifica se o arquivo foi enviado, se não ele vai retornar a mensagem abaixo.
         return Response(
             {'error': 'Nenhum arquivo enviado. Use o campo "file" para enviar o arquivo Excel.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        file = request.FILES['file']
-        if not file.name.endswith(('.xlsx', '.csv')):
+        file = request.FILES['file'] 
+
+        if not file.name.endswith(('.xlsx', '.csv')): # Verifica se o arquivo é excel ou CSV, se não, ele vai retornar a mensagem abaixo.
             return Response(
                 {'error': 'Formato de arquivo inválido. Envie um arquivo Excel (.xlsx ou .csv)'},
-                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE # Significa que o servidor se recusa a aceitar um pedido de navegador.
             )
 
+        # Lê o arquivo com Pandas.
         df = pd.read_excel(file)
 
+        # Verifica colunas obrigatórias, se não, significa que a coluna obrigatória está em falta.
         required_columns = {'sensor', 'ambiente', 'valor', 'timestamp'}
-        if not required_columns.issubset(df.columns):
-            missing = required_columns - set(df.columns)
+        if not required_columns.issubset(df.columns): # Issubset -> Ferramenta robusta para verificar a relação de subconjuntos entre conjuntos.
+            missing = required_columns - set(df.columns) # Uma variável para verificar quais colunas obrigatórios estão faltando.
             return Response(
                 {'error': f'Colunas obrigatórias faltando: {", ".join(missing)}'},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY # Significa que ele vai fazer o servidor entender, mas não vai conseguir processar.
             )
-
+        
+        # Cria as requisições para mostrar o status da importação, se foi criado, atualizado ou erros.
         created_count = 0
         duplicates = 0
         errors = 0
 
-        for _, row in df.iterrows():
-            try:
-                row = row.where(pd.notnull(row), None)
-                sensor_id = int(row['sensor'])
-                ambiente_id = int(row['ambiente'])
+        # Vai iterar linha à linha para criar ou atualizar sensores
 
-                sensor = Sensores.objects.filter(id=sensor_id).first()
-                ambiente = Ambientes.objects.filter(id=ambiente_id).first()
+        for _, row in df.iterrows(): # Itera sobre cada linha do DateFrame carregado do arquivo Excel
+            try:  
+                row = row.where(pd.notnull(row), None) # Substitua valores NaN por None
 
+                # Essa parte, vai pegar os valores da linha do Excel que precisamos no Banco de Dados
+                
+                sensor_id = int(row['sensor']) # Pega o valor 'sensor' da linha Excel e converte para inteiro (que espera o ID)
+                ambiente_id = int(row['ambiente']) # Pega o valor 'ambiente' da linha Excel e converte para inteiro (que também espera o ID)
+
+                sensor = Sensores.objects.filter(id=sensor_id).first() # Busca no banco de dados o 'sensor' correspondente ao ID informado
+                ambiente = Ambientes.objects.filter(id=ambiente_id).first() # Busca no banco de dados o 'ambiente' correspondente ao ID informado
+
+                # Verifica se o 'sensor' não foi encontrado no bando (informado ao ID)
                 if not sensor:
                     print(f"Sensor não encontrado: '{row['sensor']}'")
+
+                # Verifica se o 'ambiente' não foi encontrado no bando (informado ao ID)
                 if not ambiente:
                     print(f"Ambiente não encontrado: '{row['ambiente']}'")
 
-                if not sensor or not ambiente:
-                    errors += 1
-                    continue
+                if not sensor or not ambiente: # Se qualquer um dos dois não exitir na linha do Excel (informado pelo ID), então:
+                    errors += 1 # Incrementa o contador de erros
+                    continue # Pula para próxima linha da planilha, sem tentar criar ou atualizar nada
+
+                # Campos que serão atualizados ou definidos, abaixo:
 
                 Historico.objects.create(
                         sensor=sensor,
@@ -476,11 +466,12 @@ def upload_historico_api(request):
                 )
                 created_count += 1 # Incrementar o contador de novos sensores criados.
 
-            except Exception as e:
+            except Exception as e: # Essa parte é um bloco de tratamento de erros, vai usar para incrementar o loop que insere dados no banco
                 print(f'Erro ao importar linha: {e}')
                 errors += 1
                 continue
-
+        
+        # Retorna o Response para mostrar as estatísticas detalhadas, mensagem, quantas foram atualizados, criados e falharam.
         return Response(
             {
                 'message': f'Importação concluído com sucesso!',
@@ -494,17 +485,24 @@ def upload_historico_api(request):
             status=status.HTTP_201_CREATED
         )
 
+
+    # Except que específica caso o arquivo esteja vazio.
     except pd.errors.EmptyDataError:
         return Response(
             {'error': 'O arquivo excel está vazio'},
             status=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
-
+    
+    # Except que expecífica caso o arquvo com erro.
     except Exception as e:
         return Response(
             {'error': f'Erro ao processar arquivo: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+
+                                        #4. UsuárioCadastro
+
 
 class CustomTokenObtainPairView(TokenObtainPairView): # Esse método manipula uma criação de tokens de acesso ao login
     serializer_class = CustomTokenObtainPairSerializer
@@ -515,20 +513,25 @@ class CustomTokenRefreshView(TokenRefreshView): # Esse método é responsável p
 class RegisterView(APIView): # Esse método, permite que os novos usuários se registrem a partir da permissions classes
     permission_classes = [AllowAny]
 
+    # Vamos criar uma request que os dados serão enviados via POST através do serializer
+
     def post(self, request):
-        serializer = UsuarioCadastro(data= request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            if user:
-                json = serializer.data
-                return Response(json, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        serializer = UsuarioCadastro(data= request.data) # Serializa os dados enviados via POST
+        if serializer.is_valid(): # Se o serializer é válido, então...
+            user = serializer.save() # Salva o novo usuário no Banco de Dados
+            if user: # Se o usuário, vai...
+                json = serializer.data # Preparar a resposta com os dados do novo usuário, então...
+                return Response(json, status=status.HTTP_201_CREATED) # Vai receber essa mensagem, criado!
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) # Ou receberá essa mensagem de erro.
+
+# Uma classe para aumentar a segurança da View
 
 class ProtectedView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated] # Apenas os usuários logados podem acessar
 
+    # Retorna a mensagem, protegido, caso se o usuário verá essa mensagem!
     def get(self, request):
-        return Response({'message':'This field is protected.'})
+        return Response({'message':'This field is protected.'}) 
 
 
 def export_smartcity_to_excel(request):
@@ -550,3 +553,32 @@ def export_smartcity_to_excel(request):
         sensor.to_excel(writer, sheet_name='Sensores', index=False)
 
     return response
+
+# Uma classe para exportação de dados de todos os registros
+
+class ExportFileExcel(APIView):
+    def queryset(self, request):
+        sensores = Sensores.objects.all()
+        serializerSensores = SensorSerializer(sensores, many=True)
+        df = pd.DataFrame(serializerSensores.data)
+        df.to_csv(f"public/static/excel/{uuid.uuid4()}.csv", encoding="UTF-8")
+        print(df)
+
+        return Response({'status': 200})
+
+    def queryset(self, request):
+        sensores = Sensores.objects.all()
+        serializerSensores = SensorSerializer(sensores, many=True)
+        df = pd.DataFrame(serializerSensores.data)
+        df.to_csv(f"public/static/excel/{uuid.uuid4()}.csv", encoding="UTF-8")
+        print(df)
+
+        return Response({'status': 200})
+    
+    def queryset(self, request):
+        sensores = Sensores.objects.all()
+        serializerSensores = SensorSerializer(sensores, many=True)
+        df = pd.DataFrame(serializerSensores.data)
+        print(df)
+
+        return Response({'status': 200})
