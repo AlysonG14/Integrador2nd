@@ -8,10 +8,9 @@ from django.contrib import messages
 from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes, permission_classes
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import SessionAuthentication
@@ -21,8 +20,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .models import (Ambientes, 
                      Sensores,
-                     Historico,
-                     HistoricoFilter)
+                     Historico)
 from .serializers import (AmbienteSerializer,
                           HistoricoSerializer,
                           SensorSerializer)
@@ -532,53 +530,41 @@ class ProtectedView(APIView):
     # Retorna a mensagem, protegido, caso se o usuário verá essa mensagem!
     def get(self, request):
         return Response({'message':'This field is protected.'}) 
+    
 
 
-def export_smartcity_to_excel(request):
-    ambiente = pd.DataFrame(list(Ambientes.objects.all().values()))
-    historico = pd.DataFrame(list(Historico.objects.all().values()))
-    sensor = pd.DataFrame(list(Sensores.objects.all().values()))
+                                          # 5. Exportação de Registros
 
-    if 'timestamp' in historico.columns:
-        historico['timestamp'] = pd.to_datetime(historico['timestamp']).dt.tz_localize(None)
-
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename=smartcity.xlsx'
-
-    with pd.ExcelWriter(response, engine='openpyxl') as writer:
-        ambiente.to_excel(writer, sheet_name='Ambientes', index=False)
-        historico.to_excel(writer, sheet_name='Historico', index=False)
-        sensor.to_excel(writer, sheet_name='Sensores', index=False)
-
-    return response
+                                        
 
 # Uma classe para exportação de dados de todos os registros
 
-class ExportFileExcel(APIView):
-    def queryset(self, request):
+class ExportSensoresFile(APIView):
+    def get(self, request):
         sensores = Sensores.objects.all()
         serializerSensores = SensorSerializer(sensores, many=True)
         df = pd.DataFrame(serializerSensores.data)
-        df.to_csv(f"public/static/excel/{uuid.uuid4()}.csv", encoding="UTF-8")
-        print(df)
-
-        return Response({'status': 200})
-
-    def queryset(self, request):
-        sensores = Sensores.objects.all()
-        serializerSensores = SensorSerializer(sensores, many=True)
-        df = pd.DataFrame(serializerSensores.data)
-        df.to_csv(f"public/static/excel/{uuid.uuid4()}.csv", encoding="UTF-8")
+        df.to_csv(rf"C:\Users\alyso\OneDrive\Área de Trabalho\Integrador2nd\BACK-END\Dados_Excel{uuid.uuid4()}.csv", encoding="UTF-8")
         print(df)
 
         return Response({'status': 200})
     
-    def queryset(self, request):
-        sensores = Sensores.objects.all()
-        serializerSensores = SensorSerializer(sensores, many=True)
-        df = pd.DataFrame(serializerSensores.data)
+class ExportAmbientesFile(APIView):
+    def get(self, request):
+        ambientes = Ambientes.objects.all()
+        ambientesSensores = AmbienteSerializer(ambientes, many=True)
+        df = pd.DataFrame(ambientesSensores.data)
+        df.to_csv(rf"C:\Users\alyso\OneDrive\Área de Trabalho\Integrador2nd\BACK-END\Dados_Excel{uuid.uuid4()}.csv", encoding="UTF-8")
+        print(df)
+
+        return Response({'status': 200})
+    
+class ExportHistoricoFile(APIView):
+    def get(self, request):
+        historico = Historico.objects.all()
+        serializerHistoricos = HistoricoSerializer(historico, many=True)
+        df = pd.DataFrame(serializerHistoricos.data)
+        df.to_csv(rf"C:\Users\alyso\OneDrive\Área de Trabalho\Integrador2nd\BACK-END\Dados_Excel{uuid.uuid4()}.csv", encoding="UTF-8")
         print(df)
 
         return Response({'status': 200})

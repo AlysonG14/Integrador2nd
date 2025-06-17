@@ -3,6 +3,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.contrib import admin
 from django.urls import path
+from . import views
 from smart_city.views import CustomTokenObtainPairView # View para obter token JWT personalizado
 from smart_city.views import CustomTokenRefreshView # View para atualizaro o token JWT
 from smart_city.views import RegisterView # View para registrar novo usuário
@@ -49,11 +50,11 @@ urlpatterns = [
 
     # Exportação de Dados
 
-    path('api/exportar/Sensores', ExportSensoresFile.as_view(), name='exportar sensores'),
-    path('api/exportar/Ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'),
-    path('api/exportar/Históricos', ExportHistoricoFile.as_view(), name='exportar históricos'),
+    path('api/exportar/Sensores', ExportSensoresFile.as_view(), name='exportar sensores'), # Exportando Sensores
+    path('api/exportar/Ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'), # Exportando Ambientes
+    path('api/exportar/Históricos', ExportHistoricoFile.as_view(), name='exportar históricos'), # Exportando Históricos
 
     # Swagger
 
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui')
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui') # A visualização do Swagger
 ]
