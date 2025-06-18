@@ -18,36 +18,37 @@ export function LoginSchema(){
         formState: {errors
         }} = useForm({resolver: zodResolver(loginSchema)})
 
-    function autenticarUsuario(data){
+    function autenticarUsuarioLogin(data){
         console.log(data.email)
         console.log(data.senha)
     }
     
     return(
-        <div className={styles.container}>
-            <div className={styles.nameIcon}>
+        <main>
+            <div className={styles.container}>
+                <div className={styles.nameIcon}>
                     <BsPersonCircle size={'80'} className={styles.userLogo}></BsPersonCircle>
                     <h1 className={styles.title}>Login</h1>
                     
                 </div>
                     <div className={styles.register}>   
-                    <p className={styles.email}>
-                    Email</p>
+                        <p className={styles.email}>
+                        Email</p>
 
-                    <form
-                        onSubmit={handleSubmit(autenticarUsuario)}
-                        className={styles.form}>
+                        <form
+                            onSubmit={handleSubmit(autenticarUsuarioLogin)}
+                            className={styles.form}>
                     
-                        <div className={styles.fieldofLetter}>
+                            <div className={styles.fieldofLetter}>
                     
-                        {errors.email && (<p>{errors.email.message}</p>)}
+                            {errors.email && (<p>{errors.email.message}</p>)}
 
-                        </div>
-                        <input
-                            {...register('email')} 
-                            placeholder="Seu Email"
-                            className={styles.field}>
-                            </input>
+                            </div>
+                            <input
+                                {...register('email')} 
+                                placeholder="Seu Email"
+                                className={styles.field}>
+                                </input>
 
                         <div className={styles.fieldofLetter}>
 
@@ -56,7 +57,7 @@ export function LoginSchema(){
                     <p className={styles.senha}>
                     Senha</p>
                     <form
-                        onSubmit={handleSubmit(autenticarUsuario)}
+                        onSubmit={handleSubmit(autenticarUsuarioLogin)}
                         className={styles.form}>
                         
                         <div className={styles.fieldofLetter}>
@@ -87,6 +88,7 @@ export function LoginSchema(){
 
                 </div>
                 </div>
+        </main>
     )
 
 }
