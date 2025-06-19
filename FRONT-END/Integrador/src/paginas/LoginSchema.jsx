@@ -1,10 +1,10 @@
 import React from "react";
-import styles from './LoginSchema.module.css'
 import {useForm} from 'react-hook-form'
 import {z} from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { BsPersonCircle } from "react-icons/bs";
-import { FaKey } from "react-icons/fa6";
+import { TfiEmail } from "react-icons/tfi";
+import { FaLock } from "react-icons/fa6";
 
 const loginSchema = z.object({
     email: z.string().email({message: 'Informe um e-mail válido!'}),
@@ -22,73 +22,50 @@ export function LoginSchema(){
         console.log(data.email)
         console.log(data.senha)
     }
-    
     return(
-        <main>
-            <div className={styles.container}>
-                <div className={styles.nameIcon}>
-                    <BsPersonCircle size={'80'} className={styles.userLogo}></BsPersonCircle>
-                    <h1 className={styles.title}>Login</h1>
-                    
-                </div>
-                    <div className={styles.register}>   
-                        <p className={styles.email}>
-                        Email</p>
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-r from-white via-purple-100 to-purple-300">
+        <div className="bg-white shadow-lg rounded-2xl w-full max-w-md p-8">
+          <div className="flex flex-col items-center mb-6">
+            <BsPersonCircle size={80} className="text-purple-700"/>
+            <h1 className="mt-4 text-2xl font-bold text-purple-900">Login</h1>
+          </div>
 
-                        <form
-                            onSubmit={handleSubmit(autenticarUsuarioLogin)}
-                            className={styles.form}>
-                    
-                            <div className={styles.fieldofLetter}>
-                    
-                            {errors.email && (<p>{errors.email.message}</p>)}
+          <form onSubmit={handleSubmit(autenticarUsuarioLogin)} className="space-y-4">
 
-                            </div>
-                            <input
-                                {...register('email')} 
-                                placeholder="Seu Email"
-                                className={styles.field}>
-                                </input>
+            {/* Email */}
 
-                        <div className={styles.fieldofLetter}>
+            <div className="flex items-center border-2 border-purple-700 rounded px-3 py-2">
+              <TfiEmail className="text-purple-700 mr-2"/>
+              <input type="text" placeholder="Adicionar Email"{...register("email")} className="flex-1 bg-transparent outline-none placeholder-purple-400" />
+              {errors.email && <p className="text-sm text-purple-700">{errors.email.message}</p>}
+            </div>
 
-                </div>
-                    </form>
-                    <p className={styles.senha}>
-                    Senha</p>
-                    <form
-                        onSubmit={handleSubmit(autenticarUsuarioLogin)}
-                        className={styles.form}>
-                        
-                        <div className={styles.fieldofLetter}>
-                        {errors.senha && (<p>{errors.senha.message}</p>)}
+            {/* Senha */}
 
-                        </div>
-                        <input
-                            {...register('senha')}
-                            placeholder="Sua Senha"
-                            className={styles.field}>
-                        </input>
+            <div className="flex items-center border-2 border-purple-700 rounded px-3 py-2">
+              <FaLock className="text-purple-700 mr-2"/>
+              <input type="password" placeholder="Nova Senha"{...register("senha")} className="flex-1 bg-transparent outline-none placeholder-purple-400" />
+              {errors.senha && <p className="text-sm text-purple-700">{errors.senha.message}</p>}
+            </div>
 
-                        <br></br>
-                        <div className={styles.componentsSenha}>
-                            <a href={'/'}>Lembrar senha</a> <br></br>
-                            <a href={'/'}>Esqueceu a senha</a>
-                        </div>
+            <div>
+                <button type="checkbox" className=""></button>
+                <a href='#'>Relembrar Senha</a>
+                <a href='#'>Esqueceu a Senha?</a>
+            </div>
 
-                        <button to={'/inicial'}
-                            className={styles.button}>Login
-                        </button>
-                        
-                        <div className={styles.btn_add_user}>
-                            <a href={'/cadastro'}>Cadastra-se</a>   
-                        </div>
+            <button type="submit" className="w-full mt-2 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded font-semibold transition-colors">
+              LOGIN
+            </button>
 
-                    </form>
+            {/* Link para Cadastro */}
 
-                </div>
-                </div>
-        </main>
-    )
+            <div>
+              <a href="#" className="text-sm text-purple-700 underline">Cadastro</a>
+            </div>
 
+          </form>
+        </div>
+      </main>
+    );
 }

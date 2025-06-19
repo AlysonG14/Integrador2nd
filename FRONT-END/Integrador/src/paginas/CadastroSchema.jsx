@@ -47,8 +47,6 @@ export function CadastroSchema(){
 
           {/* Login Social */}
 
-          
-
           <form onSubmit={handleSubmit(autenticarUsuarioCadastro)} className="space-y-4">
 
             {/* Usuário */}
@@ -114,4 +112,3 @@ export function CadastroSchema(){
       </main>
     );
 }
-

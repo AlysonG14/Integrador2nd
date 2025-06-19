@@ -1,6 +1,6 @@
 import { LoginSchema } from './paginas/LoginSchema'
 import { CadastroSchema } from './paginas/CadastroSchema'
-import { Exportar } from './paginas/Exportar'
+import Cabeçalho  from './componentes/Cabeçalho'
 // import { Rotas } from './rotas/Rotas'
 
 
@@ -8,7 +8,7 @@ import { Exportar } from './paginas/Exportar'
 export function App(){
   return (
     <div>
-      <CadastroSchema />
+      <Cabeçalho />
     </div>
   )
 }
