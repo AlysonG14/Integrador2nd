@@ -1,96 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
-
-const HistoricoDados = [
-  {
-    id: 1,
-    tipo: "luminosidade",
-    codigo: "00:1B:44:11:3A:B9",
-    descricao: "OFICINA - FRESAGEM 1",
-    data: "2025-08-16",
-  },
-  {
-    id: 2,
-    tipo: "luminosidade",
-    codigo: "00:1B:44:11:3A:B9",
-    descricao: "FMS - SISTEMA . FLEX.MAN.",
-    data: "2025-03-05",
-  },
-  {
-    id: 3,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:BA",
-    descricao: "OFICINA - FABRICAÇÃO MECÂNICA 1",
-    data: "2025-12-02",
-  },
-  {
-    id: 4,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:B7",
-    descricao: "LAB. DE ROBÓTICA 1",
-    data: "2025-11-07",
-  },
-  {
-    id: 5,
-    tipo: "umidade",
-    codigo: "00:1B:44:11:3A:BA",
-    descricao: "CNC FERRAMENTARIA",
-    data: "2025-11-13",
-  },
-  {
-    id: 6,
-    tipo: "umidade",
-    codigo: "00:1B:44:11:3A:B9",
-    descricao: "OFICINA - COMANDOS ELÉTRICOS ",
-    data: "2025-07-25",
-  },
-  {
-    id: 7,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:BA",
-    descricao: "LAB. DE INFORMÁTICA A02",
-    data: "2025-03-12",
-  },
-  {
-    id: 8,
-    tipo: "umidade",
-    codigo: "00:1B:44:11:3A:BA",
-    descricao: "COORDENAÇÃO CURSO SUPERIOR",
-    data: "2025-04-21",
-  },
-  {
-    id: 9,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:BA",
-    descricao: "OPP FIC",
-    data: "2025-09-12",
-  },
-  {
-    id: 10,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:B7",
-    descricao: "BAIXA REALOCAÇÃO",
-    data: "2025-10-24",
-  },
-  {
-    id: 11,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:B9",
-    descricao: "MANUTENÇÃO PREDIAL",
-    data: "2025-05-18",
-  },
-  {
-    id: 12,
-    tipo: "temperatura",
-    codigo: "00:1B:44:11:3A:BA",
-    descricao: "ENTREPOSTO",
-    data: "2025-12-23",
-  },
-];
-
-export function Historico() {
-  const navigate = useNavigate();
+import {FaInstagram, FaFacebook, FaLinkedin, } from "react-icons/fa";
+export function Exportacao() {
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-gray-100 font-sans text-gray-900 flex flex-col">
       {/* Cabeçalho */}
@@ -109,7 +21,7 @@ export function Historico() {
             <a href="/inicial/grafico/" className="hover:underline">
               Gráficos
             </a>
-            <a href="/inicial/exportacao/" className="hover:underline">
+            <a href="#" className="hover:underline">
               Exportar
             </a>
           </nav>
@@ -128,10 +40,7 @@ export function Historico() {
 
       <div className="flex flex-1">
         <aside className="bg-gray-900 text-gray-300 w-64 p-6 flex flex-col gap-6">
-          <button
-            onClick={() => navigate("/inicial/")}
-            className="flex items-center gap-2 text-green-400 text-white transition-transform duration-1000 hover:scale-110"
-          >
+          <button onClick={()=> navigate("/inicial/")} className="flex items-center gap-2 text-green-400 text-white transition-transform duration-1000 hover:scale-110">
             <img src="/images/Voltar.png" alt="Voltar"></img>
             <span>Voltar</span>
           </button>
@@ -148,81 +57,104 @@ export function Historico() {
           </div>
 
           <nav className="flex flex-col gap-3">
-            <button
-              onClick={() => navigate("/inicial/crud/")}
-              className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110"
-            >
+            <button onClick={()=> navigate("/inicial/crud/")} className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110">
               Ambientes
             </button>
 
-            <button
-              onClick={() => navigate("/inicial/crud/")}
-              className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110"
-            >
+            <button onClick={()=> navigate("/inicial/crud/")} className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110">
               Sensores
             </button>
 
-            <button className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110">
+            <button onClick={()=> navigate("/inicial/historico/")} className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110">
               Histórico
             </button>
           </nav>
 
-          <button
-            onClick={() => navigate("/login/")}
-            className="mt-auto flex items-center justify-center gap-2 border border-green-700 text-white text-xl px-4 py-2 rounded-md font-semibold transition-transform duration-1000 hover:scale-110"
-          >
+          <button onClick={()=> navigate("/login/")} className="mt-auto flex items-center justify-center gap-2 border border-green-700 text-white text-xl px-4 py-2 rounded-md font-semibold transition-transform duration-1000 hover:scale-110">
             <img
               src="/images/Botão Ícone - Sair.png"
               alt="Sair Ícone"
-              className="p-1 bg-green-700 rounded-full w-13 h-13"
+              className=" p-1 bg-green-700 rounded-full w-13 h-13"
             ></img>
             <span>Sair</span>
           </button>
         </aside>
 
-        {/* Conteúdo */}
+        {/* Conteúdo Principal */}
 
         <main className="flex-1">
-          <section className="p-8">
-            {/* Campo de Busca */}
-            <div className="mb-4">
-              <label
-                htmlFor="buscaId"
-                className="block mb-1 text-sm font-medium text-gray-700"
-              >
-                Buscar por ID:
-              </label>
-              <input
-                id="buscaId"
-                type="text"
-                placeholder="Pesquisar ID"
-                className="px-4 py-2 border rounded-md w-1/3"
-              />
-            </div>
+          {/* Seção de Exportação */}
 
-            {/* Tabela */}
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-800 text-white">
-                  <tr>
-                    <th className="px-6 py-3">ID</th>
-                    <th className="px-6 py-3">Histórico</th>
-                    <th className="px-6 py-3">Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {HistoricoDados.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-100 border-b">
-                      <td className="px-6 py-3">{item.id}</td>
-                      <td className="px-6 py-3">
-                        {item.tipo} - {item.codigo} -{" "}
-                        <span className="text-semibond">{item.descricao}</span>
-                      </td>
-                      <td className="px-6 py-3">{item.data}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <section className="p-8">
+            <div className="bg-gray-900 shadow-lg rounded-xl p-5 space-y-6">
+              <div className="flex justify-center items-center bg-green-700 rounded-xl px-6 py-6 space-x-4">
+                <img
+                  src="/images/Excel.png"
+                  alt="Excel"
+                  className="w-12 h-12"
+                ></img>
+                <h2 className="text-2xl font-bold text-white">
+                  Exportação de Dados
+                </h2>
+              </div>
+
+              <p className="text-[#FFFFFF] bg-gray-800 p-4 rounded-md text-justify border border-gray-700">
+                Esta funcionalidade permite ao usuário exportar as informações
+                exibidas na tela para um arquivo Excel (.xlsx ou .csv) de forma
+                rápida e prática. Ao clicar no botão "Exportar Dados", um
+                arquivo será gerado contendo todos os dados atuais, organizados
+                em colunas e formatado para facilitar análises, compartilhamento
+                e armazenamento externo. Os dados são: Sensores, Ambientes e
+                Históricos.
+              </p>
+
+              {/* Botões de Exportação */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div className="border border-green-700 p-6 bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition">
+                  <img
+                    src="/images/Lâmpada.png" alt="Ícone de Sensores"
+                    className="text-green-600 text-4xl mx-auto mb-2"
+                  ></img>
+                  <p className="text-lg text-white font-semibold mb-2">
+                    Sensores
+                  </p>
+                  <button className="bg-green-600 hover:bg-green-700 hover:scale-105 transition-transform duration-300 text-white px-4 py-2 rounded font-semibold">
+                    Exportar
+                  </button>
+                </div>
+                <div className="border border-green-700 p-6 bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition">
+                  <img
+                    src="/images/Folha.png" alt="Ícone de Ambiente"
+                    className="text-green-600 bg-gray-800 rounded-xl text-4xl mx-auto mb-8"
+                  ></img>
+                  <p className="text-lg text-white font-semibold mb-2">
+                    Ambientes
+                  </p>
+                  <button className="bg-green-600 hover:bg-green-700 hover:scale-105 transition-transform duration-300 text-white px-4 py-2 rounded font-semibold">
+                    Exportar
+                  </button>
+                </div>
+                <div className="border border-green-700 p-6 bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition">
+                  <img
+                    src="/images/Histórico.png" alt="Ícone de Histórico"
+                    className="text-green-600 text-4xl mx-auto mb-7"
+                  ></img>
+                  <p className="text-lg text-white font-semibold mb-2">
+                    Histórico
+                  </p>
+                  <button className="bg-green-600 hover:bg-green-700 hover:scale-105 transition-transform duration-300 text-white px-4 py-2 rounded font-semibold">
+                    Exportar
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 mt-6 text-white">
+                  <img
+                    src="/images/Ícone de Formato Excel.png"
+                    alt="Ícone do Arquivo"
+                    className="w-8 h-10"
+                  ></img>
+                  <p>Formato .xlsx ou .csv</p>
+                </div>
+              </div>
             </div>
           </section>
         </main>
