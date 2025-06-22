@@ -1,31 +1,23 @@
-import pandas as pd 
-import uuid
-from datetime import datetime
-from django.http import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.paginator import Paginator
-from django.contrib import messages
-from django.conf import settings
-from rest_framework import status
-from rest_framework.decorators import api_view, parser_classes, permission_classes
-from rest_framework.parsers import MultiPartParser
-from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.authentication import SessionAuthentication
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from .models import (Ambientes, 
-                     Sensores,
-                     Historico)
-from .serializers import (AmbienteSerializer,
-                          HistoricoSerializer,
-                          SensorSerializer)
-from .serializers import CustomTokenObtainPairSerializer, UsuarioCadastro
-from .paginations import MyLimitOffsetPagination
+import pandas as pd # Bilioteca para manipulação de dados, usado para criar/importar/exportar
+import uuid # Biblioteca para gerar identificadores únicos
+import os # Biblioteca para verificar o acesso do sistema operacional
+from datetime import datetime # Biblioteca para manipular os horários
+from django.http import FileResponse # Biblioteca para resposta HTTP, especializada para o envio de arquivos
+from django.conf import settings # Biblioteca para o acesso a configurações globais do Django (como BASE_DIR)
+from rest_framework import status # Códigos HTTP (400, 404, 201), usados para controlar as respostas da APIs
+from rest_framework.decorators import api_view, parser_classes, permission_classes # Biblioteca de decoradores DRF, para criar endpoints de API com permissão
+from rest_framework.parsers import MultiPartParser # Biblioteca para permitir o parsing de requisições multipart/form-date
+from rest_framework.response import Response # Objeto de resposta padrão do DRF
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView # Views genéricas de CRUD para as informações de APIs
+from rest_framework.views import APIView # Uma view que permite ver todo o histórico das informações da APIs
+from rest_framework.permissions import IsAuthenticated, AllowAny # Biblioteca para que o usuário tenha o controle de acesso
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView # Biblioteca para gerar e renover tokens JWT
+from drf_yasg.utils import swagger_auto_schema # Decorador para adicionar documentação automática pelo Swagger
+from drf_yasg import openapi # Tipos de dados e parâmetros para a documentação Swagger
+from .models import (Ambientes, Sensores, Historico) # Importação necessários dos modelos de dados
+from .serializers import (AmbienteSerializer, HistoricoSerializer, SensorSerializer) # Serializadores para transformar dados em JSON e validar dados
+from .serializers import CustomTokenObtainPairSerializer, UsuarioCadastro # Serializadores para autenticação e cadastro de usuários
+from .paginations import MyLimitOffsetPagination # Classe personalizada de paginação para controlar o tamanho do limite de respostas da API
 
 # Create your views here.
 
@@ -536,35 +528,59 @@ class ProtectedView(APIView):
                                           # 5. Exportação de Registros
 
                                         
-
 # Uma classe para exportação de dados de todos os registros
+
+# Exporação de Sensores
 
 class ExportSensoresFile(APIView):
     def get(self, request):
         sensores = Sensores.objects.all()
         serializerSensores = SensorSerializer(sensores, many=True)
         df = pd.DataFrame(serializerSensores.data)
-        df.to_csv(rf"C:\Users\alyso\OneDrive\Área de Trabalho\Integrador2nd\BACK-END\Dados_Excel{uuid.uuid4()}.csv", encoding="UTF-8")
+        
+        export_dir = os.path.join(settings.BASE_DIR, "exportações")
+        os.makedirs(export_dir, exist_ok=True)
+        
+        file_name = f'Sensores_{uuid.uuid4()}.csv'
+        file_path = os.path.join(export_dir, file_name)
+        df.to_csv(file_path, encoding="UTF-8", index=False)
         print(df)
-
-        return Response({'status': 200})
+        
+        return FileResponse(open(file_path, "rb"), as_attachment=True, filename=file_name)
+        
+        
+# Exporação de Ambientes
     
 class ExportAmbientesFile(APIView):
     def get(self, request):
         ambientes = Ambientes.objects.all()
         ambientesSensores = AmbienteSerializer(ambientes, many=True)
         df = pd.DataFrame(ambientesSensores.data)
-        df.to_csv(rf"C:\Users\alyso\OneDrive\Área de Trabalho\Integrador2nd\BACK-END\Dados_Excel{uuid.uuid4()}.csv", encoding="UTF-8")
+        
+        export_dir = os.path.join(settings.BASE_DIR, "exportações")
+        os.makedirs(export_dir, exist_ok=True)
+        
+        file_name = f'Ambientes_{uuid.uuid4()}.csv'
+        file_path = os.path.join(export_dir, file_name)
+        df.to_csv(file_path, encoding="UTF-8", index=False)
         print(df)
+        
 
-        return Response({'status': 200})
+        return FileResponse(open(file_path, "rb"), as_attachment=True, filename=file_name)
+    
+# Exporação de Histórico
     
 class ExportHistoricoFile(APIView):
     def get(self, request):
         historico = Historico.objects.all()
         serializerHistoricos = HistoricoSerializer(historico, many=True)
         df = pd.DataFrame(serializerHistoricos.data)
-        df.to_csv(rf"C:\Users\alyso\OneDrive\Área de Trabalho\Integrador2nd\BACK-END\Dados_Excel{uuid.uuid4()}.csv", encoding="UTF-8")
-        print(df)
-
-        return Response({'status': 200})
+        
+        export_dir = os.path.join(settings.BASE_DIR, "exportações")
+        os.makedirs(export_dir, exist_ok=True)
+        
+        file_name = f'Histórico_{uuid.uuid4()}.csv'
+        file_path = os.path.join("", file_name)
+        df.to_csv(file_path, encoding='UTF-8', index=True)
+        
+        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_name)

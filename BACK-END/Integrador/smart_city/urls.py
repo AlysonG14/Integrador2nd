@@ -50,9 +50,9 @@ urlpatterns = [
 
     # Exportação de Dados
 
-    path('api/exportar/Sensores', ExportSensoresFile.as_view(), name='exportar sensores'), # Exportando Sensores
-    path('api/exportar/Ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'), # Exportando Ambientes
-    path('api/exportar/Históricos', ExportHistoricoFile.as_view(), name='exportar históricos'), # Exportando Históricos
+    path('api/exportar/sensores', ExportSensoresFile.as_view(), name='exportar sensores'), # Exportando Sensores
+    path('api/exportar/ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'), # Exportando Ambientes
+    path('api/exportar/históricos', ExportHistoricoFile.as_view(), name='exportar históricos'), # Exportando Históricos
 
     # Swagger
 
