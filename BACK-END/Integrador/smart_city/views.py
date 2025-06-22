@@ -37,8 +37,6 @@ def apiOverview(request):
 
     return Response(api_urls)
 
-
-
                                             # 1. SENSORES 
 
 
