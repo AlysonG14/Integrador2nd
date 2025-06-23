@@ -425,11 +425,11 @@ def upload_historico_api(request):
 
                 # Essa parte, vai pegar os valores da linha do Excel que precisamos no Banco de Dados
                 
-                sensor_id = int(row['sensor']) # Pega o valor 'sensor' da linha Excel e converte para inteiro (que espera o ID)
-                ambiente_id = int(row['ambiente']) # Pega o valor 'ambiente' da linha Excel e converte para inteiro (que também espera o ID)
+                sensor = int(row['sensor']) # Pega o valor 'sensor' da linha Excel e converte para inteiro (que espera o ID)
+                ambiente = int(row['ambiente']) # Pega o valor 'ambiente' da linha Excel e converte para inteiro (que também espera o ID)
 
-                sensor = Sensores.objects.filter(id=sensor_id).first() # Busca no banco de dados o 'sensor' correspondente ao ID informado
-                ambiente = Ambientes.objects.filter(id=ambiente_id).first() # Busca no banco de dados o 'ambiente' correspondente ao ID informado
+                sensor = Sensores.objects.filter(id=sensor).first() # Busca no banco de dados o 'sensor' correspondente ao ID informado
+                ambiente = Ambientes.objects.filter(id=ambiente).first() # Busca no banco de dados o 'ambiente' correspondente ao ID informado
 
                 # Verifica se o 'sensor' não foi encontrado no bando (informado ao ID)
                 if not sensor:

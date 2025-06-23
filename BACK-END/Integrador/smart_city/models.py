@@ -1,8 +1,8 @@
-from django.db import models
-from django.core.validators import RegexValidator
-from django.contrib.auth.models import AbstractUser
-from django import forms
-from django_filters import rest_framework as filters
+from django.db import models # Importação de funcionamento dos modelos
+from django.core.validators import RegexValidator # Importação de Validação
+from django.contrib.auth.models import AbstractUser # Importação de cadastramento de usuário do sistema
+from django import forms # Importação de Formulário
+from django_filters import rest_framework as filters # Importação de Filtros
 
 # Create your models here.
 
@@ -31,7 +31,7 @@ TIPO_UNIDADE = [
     ('lux', 'lux')
 ]
 
-# Aqui vai ser o campo do modelo Sensors
+# Aqui vai ser o campo do modelo Sensores
 
 class Sensores(models.Model):
     sensor = models.CharField(max_length=12, choices=TIPOS_SENSORES, null=True, blank=True)
@@ -98,20 +98,12 @@ class HistoricoFilter(filters.FilterSet):
 
 # Define os tipos possíveis de sensores (choices para o campo do Usuário Cadastrado)
 
-DADOS_SENSORES = [
-    ('Sensores', 'Sensores'),
-    ('Ambientes', 'Ambientes'),
-    ('Historico', 'Historico')
-]
-
-# Campo necessários para o supervisor realizar o cadastramento do sistema de Smart City, utilizando o AbstractUser
-
 class UsuarioCadastro(AbstractUser):
-    dados_sensores = models.CharField(max_length=12, choices=DADOS_SENSORES, null=True, blank=True)
     nome = models.CharField(max_length=255, null=True, blank=True)
+    pais = models.CharField(max_length=255)
+    telefone = models.CharField(max_length=255)
     email = models.EmailField(unique=True, null=True)
-    idade = models.PositiveIntegerField(null=True, blank=True)
-    foto = models.ImageField(upload_to='images/', blank=True, null=True)
+    senha = models.CharField(max_length=255)
 
     # O primeiro registro, será o email como o principal default, para o usuário fazer login através de 'login'
     USERNAME_FIELD = 'email'

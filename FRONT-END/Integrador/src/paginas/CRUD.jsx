@@ -1,6 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from 'axios'
 import { useNavigate } from "react-router-dom";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { number } from "zod";
+
+axios.get("http://localhost:8000/sensor/", {
+  header: {
+    Authorization: `Bearer ${eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwNzEyNDU0LCJpYXQiOjE3NTA3MDg4NTQsImp0aSI6Ijk4ZDcyY2FjMzI4NDQ3ZTRiZWQ4NmZlMDMyZmRiYjA5IiwidXNlcl9pZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJyb2xlcyI6W119.BcPQTNz-dqmBb5oJzC5b2lfPtQcnr_lW1P6PuNmXoSI}`
+  }
+})
 
 const dadosAmbientes = [
   {
@@ -64,8 +72,36 @@ const dadosSensores = [
   },
 ];
 
-const CRUDPage = ({ dados, tipo }) => {
+const CRUDPage = ({ dados, tipo, onDelete }) => {
   const [tab, setTab] = useState("visualizar");
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    const dadosForm = Object.fromEntries(form.entries());
+    const rota = tipo.toLowerCase();
+
+    try {
+      await axios.post(`http://localhost:8000/${rota}/`, dadosForm)
+      alert(`${tipo} criado com sucesso!`);
+      e.target.reset();
+    } catch (error) {
+      console.error("Erro ao criar: ", error)
+      alert("Erro ao Criar!")
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const rota = tipo.toLowerCase();
+    try {
+      await axios.delete(`http://localhost:8000/${rota}/${id}`)
+      alert(`${tipo} deletado com sucesso!`)
+      onDelete(id);
+    } catch (error) {
+      console.error("Erro ao deletar: ", error)
+      alert("Erro ao Deletar!")
+    }
+  }
 
   return (
     <div className="p-4 bg-white rounded-xl shadow-md w-full max-w-6xl mx-auto">
@@ -78,12 +114,11 @@ const CRUDPage = ({ dados, tipo }) => {
           <button
             key={op}
             onClick={() => setTab(op)}
-            className={`px-6 py-2 rounded-full font-medium transition-all durantion-200
-                         ${
-                           tab === op
-                             ? "bg-green-600 text-white shadow"
-                             : "bg-gray-100 text-gray-700 hover:bg-green-100"
-                         }`}
+            className={`px-6 py-2 rounded-full font-medium transition-all duration-200
+                         ${tab === op
+                ? "bg-green-600 text-white shadow"
+                : "bg-gray-100 text-gray-700 hover:bg-green-100"
+              }`}
           >
             {op.charAt(0).toUpperCase() + op.slice(1)}
           </button>
@@ -91,13 +126,15 @@ const CRUDPage = ({ dados, tipo }) => {
       </div>
 
       {tab === "criar" && (
-        <form className="space-y-4 max-w-xl mx-auto">
-          {Object.keys(dados[0]).map((campo) => (
+        <form onSubmit={handleCreate} className="space-y-4 max-w-xl mx-auto">
+          {Object.keys(dados[0] || {}).map((campo) => (
             <input
               key={campo}
-              type="text"
+              name={campo}
+              type={campo.toLowerCase().includes("latitude") || campo.toLowerCase().includes("longitude") ? "number" : "text"}
               placeholder={campo}
               className="border border-gray-300 px-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              required
             />
           ))}
           <button
@@ -114,7 +151,7 @@ const CRUDPage = ({ dados, tipo }) => {
           <table className="min-w-full table-auto border border-gray-200">
             <thead className="bg-gray-100">
               <tr>
-                {Object.keys(dados[0]).map((chave) => (
+                {Object.keys(dados[0] || {}).map((chave) => (
                   <th
                     key={chave}
                     className="px-4 py-2 text-left text-gray-600 font-medium border-b"
@@ -140,12 +177,14 @@ const CRUDPage = ({ dados, tipo }) => {
                   ))}
                   {tab === "atualizar" && (
                     <td className="px-4 py-2 border-b">
-                      <button className="x'hover:underline">Editar</button>
+                      <button className="hover:underline">Editar</button>
                     </td>
                   )}
                   {tab === "deletar" && (
                     <td className="px-4 py-2 border-b">
-                      <button className="hover:underline">Deletar</button>
+                      <button 
+                      onClick={() => handleDelete(item.id)}
+                      className="hover:underline">Deletar</button>
                     </td>
                   )}
                 </tr>
@@ -160,8 +199,25 @@ const CRUDPage = ({ dados, tipo }) => {
 
 export function CRUD() {
   const [entidade, setEntidade] = useState("sensores");
-  const dados = entidade === "sensores" ? dadosSensores : dadosAmbientes;
+  const [dados, setDados] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const rota = entidade === 'sensores' ? 'sensor' : 'ambiente';
+    const token = localStorage.getItem("token");
+
+  axios.get("http://localhost:8000/sensor/", {
+    headers: {
+      Authorization: `Bearer ${eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwNzEyNDU0LCJpYXQiOjE3NTA3MDg4NTQsImp0aSI6Ijk4ZDcyY2FjMzI4NDQ3ZTRiZWQ4NmZlMDMyZmRiYjA5IiwidXNlcl9pZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJyb2xlcyI6W119.BcPQTNz-dqmBb5oJzC5b2lfPtQcnr_lW1P6PuNmXoSI}`
+    }
+  })
+      .then(res => setDados(res.data))
+      .catch(err => console.error(`Erro ao buscar ${entidade}:`, err))
+  }, [entidade]);
+
+  const handleDelete = (id) => {
+    setDados(prev => prev.filter(d => d.id !== id))
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans text-gray-900 flex flex-col">
@@ -200,7 +256,7 @@ export function CRUD() {
         {/* Lateral */}
 
         <aside className="bg-gray-900 text-gray-300 w-64 p-6 flex flex-col gap-6">
-          <button onClick={()=> navigate("/inicial/")} className="flex items-center gap-2 text-green-400 text-white transition-transform duration-1000 hover:scale-110">
+          <button onClick={() => navigate("/inicial/")} className="flex items-center gap-2 text-green-400 text-white transition-transform duration-1000 hover:scale-110">
             <img src="/images/Voltar.png" alt="Voltar"></img>
             <span>Voltar</span>
           </button>
@@ -225,12 +281,12 @@ export function CRUD() {
               Sensores
             </button>
 
-            <button onClick={()=> navigate("/inicial/historico/")} className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110">
+            <button onClick={() => navigate("/inicial/historico/")} className="border border-green-700 text-white text-xl py-2 rounded-lg font-semibold transition-transform duration-1000 hover:scale-110">
               Histórico
             </button>
           </nav>
 
-          <button onClick={()=> navigate("/login/")} className="mt-auto flex items-center justify-center gap-2 border border-green-700 text-white text-xl px-4 py-2 rounded-md font-semibold transition-transform duration-1000 hover:scale-110">
+          <button onClick={() => navigate("/login/")} className="mt-auto flex items-center justify-center gap-2 border border-green-700 text-white text-xl px-4 py-2 rounded-md font-semibold transition-transform duration-1000 hover:scale-110">
             <img
               src="/images/Botão Ícone - Sair.png"
               alt="Sair Ícone"
@@ -248,21 +304,19 @@ export function CRUD() {
               <div className="flex justify-center gap-6 mb-6">
                 <button
                   onClick={() => setEntidade("sensores")}
-                  className={`px-6 py-2 rounded-full font-semibold transition-all ${
-                    entidade === "sensores"
-                      ? "bg-purple-600 text-white shadow"
-                      : "bg-white text-gray-700 hover:bg-purple-100"
-                  }`}
+                  className={`px-6 py-2 rounded-full font-semibold transition-all ${entidade === "sensores"
+                    ? "bg-purple-600 text-white shadow"
+                    : "bg-white text-gray-700 hover:bg-purple-100"
+                    }`}
                 >
                   Sensores
                 </button>
                 <button
                   onClick={() => setEntidade("ambientes")}
-                  className={`px-6 py-2 rounded-full font-semibold transition-all ${
-                    entidade === "ambientes"
-                      ? "bg-purple-600 text-white shadow"
-                      : "bg-white text-gray-700 hover:bg-purple-100"
-                  }`}
+                  className={`px-6 py-2 rounded-full font-semibold transition-all ${entidade === "ambientes"
+                    ? "bg-purple-600 text-white shadow"
+                    : "bg-white text-gray-700 hover:bg-purple-100"
+                    }`}
                 >
                   Ambientes
                 </button>

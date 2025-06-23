@@ -1,6 +1,6 @@
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework import serializers
-from .models import Sensores, Historico, Ambientes, UsuarioCadastro
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer # Importação de Token
+from rest_framework import serializers # Importação de Serializadores
+from .models import Sensores, Historico, Ambientes, UsuarioCadastro # Importação de modelos de dados 
 
     
 # Vamos criar um serializer, com três classes da models, para validar os dados em JSON
@@ -66,17 +66,19 @@ class CustomUsuarioCadastrado(serializers.ModelSerializer):
 
     class Meta:
         model = UsuarioCadastro
-        fields = ('nome', 'username', 'email', 'idade')
+        fields = ('nome', 'username', 'pais', 'telefone', 'email')
 
     # Método para criar um usuário usando o create_user para lidar com senha corretamente
 
     def create(self, validated_data):
         user = UsuarioCadastro.objects.create_user(
             # Campos necessários para validação de data
-            email=validated_data['email'],
-            nome=validated_data['nome'],
             username=validated_data['username'],
-            idade=validated_data['idade']
+            nome=validated_data['nome'],
+            pais=validated_data['pais'],
+            email=validated_data['email'],
+            telefone=validated_data['telefone'],
+            senha=validated_data['senha']
         )
         return user
     

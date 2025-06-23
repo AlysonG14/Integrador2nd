@@ -3,7 +3,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.contrib import admin
 from django.urls import path
-from . import views
+from . import views # Importando a views 
 from smart_city.views import CustomTokenObtainPairView # View para obter token JWT personalizado
 from smart_city.views import CustomTokenRefreshView # View para atualizaro o token JWT
 from smart_city.views import RegisterView # View para registrar novo usuário
@@ -12,6 +12,7 @@ from smart_city.views import ExportSensoresFile # View para exportação de dado
 from smart_city.views import ExportAmbientesFile # View para exportação de dados Ambientes
 from smart_city.views import ExportHistoricoFile # View para exportação de dados Históricos
 
+# Visualização do Swagger Schema de todas as informações
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -42,17 +43,17 @@ urlpatterns = [
     path('api/token/register/', RegisterView.as_view(), name='register'), # Rota para registrar novo usuário
     path('api/token/protected/', ProtectedView.as_view(), name='protected'), # Rota para ter segurança e protegida
 
-    # URLs para upload de de dados via APIs, utilizando a importação de dados do Excel (.xlsx ou .csv)
+    # URLs para upload de de dados via APIs, utilizando a importação de dados do Excel (.xlsx ou .csv) no Swagger
 
-    path('api/upload/sensores/', views.upload_sensores_api, name='upload_sensores'), # Importando Sensores
-    path('api/upload/ambiente/', views.upload_ambiente_api, name='upload_ambientes'), # Importando Ambientes
-    path('api/upload/historico/', views.upload_historico_api, name='upload_historicos'), # Importando Históricos
+    path('api/upload/sensores/', views.upload_sensores_api, name='upload_sensores'), # Importando Sensores (DENTRO DO SWAGGER)
+    path('api/upload/ambiente/', views.upload_ambiente_api, name='upload_ambientes'), # Importando Ambientes (DENTRO DO SWAGGER)
+    path('api/upload/historico/', views.upload_historico_api, name='upload_historicos'), # Importando Históricos (DENTRO DO SWAGGER)
 
     # Exportação de Dados
 
-    path('api/exportar/sensores', ExportSensoresFile.as_view(), name='exportar sensores'), # Exportando Sensores
-    path('api/exportar/ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'), # Exportando Ambientes
-    path('api/exportar/históricos', ExportHistoricoFile.as_view(), name='exportar históricos'), # Exportando Históricos
+    path('api/exportar/sensores', ExportSensoresFile.as_view(), name='exportar sensores'), # Exportando Sensores (VIA DIRETO DOWNLOAD)
+    path('api/exportar/ambientes', ExportAmbientesFile.as_view(), name='exportar ambientes'), # Exportando Ambientes (VIA DIRETO DOWNLOAD)
+    path('api/exportar/históricos', ExportHistoricoFile.as_view(), name='exportar históricos'), # Exportando Históricos (VIA DIRETO DOWNLOAD)
 
     # Swagger
 

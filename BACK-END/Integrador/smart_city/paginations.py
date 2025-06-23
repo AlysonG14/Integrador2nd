@@ -1,4 +1,4 @@
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.pagination import LimitOffsetPagination # Importação da Paginação
 
 # Essa é uma classe personalizada para criar uma Paginação do DRF
 

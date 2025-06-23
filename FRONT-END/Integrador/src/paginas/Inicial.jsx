@@ -73,7 +73,7 @@ export function Inicial() {
             </button>
           </nav>
 
-          <button onClick={()=> navigate("/login/")} className="mt-auto flex items-center justify-center gap-2 border border-green-700 text-white text-xl px-4 py-2 rounded-md font-semibold transition-transform duration-1000 hover:scale-110">
+          <button onClick={() => navigate("/login/")} className="mt-auto flex items-center justify-center gap-2 border border-green-700 text-white text-xl px-4 py-2 rounded-md font-semibold transition-transform duration-1000 hover:scale-110">
             <img
               src="/images/Botão Ícone - Sair.png"
               alt="Sair Ícone"

@@ -1,5 +1,5 @@
-from django.contrib import admin
-from .models import Historico, Sensores, Ambientes
+from django.contrib import admin # Importação de Administrador
+from .models import Historico, Sensores, Ambientes # Importação de banco de dados dentro do registro administrador
 
 # Register your models here.
 

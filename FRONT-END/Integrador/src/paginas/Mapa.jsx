@@ -19,6 +19,7 @@ const blueIcon = new Icon({
   iconAnchor: [15, 42],
 });
 
+
 const sensores = [
   { id: 1, nome: "Washington", lat: 38.89511, lng: -77.03637, cor: "red" },
   { id: 2, nome: "Baltimore", lat: 39.2904, lng: -76.6122, cor: "red" },

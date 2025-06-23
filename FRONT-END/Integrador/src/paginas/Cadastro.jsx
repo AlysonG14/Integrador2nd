@@ -171,7 +171,6 @@ export function Cadastro() {
             />
 
             <button
-              onClick={() => navigate("/login/")}
               type="submit"
               className="w-full py-3 bg-purple-800 text-white font-bold rounded-md hover:bg-purple-800 transition"
             >
