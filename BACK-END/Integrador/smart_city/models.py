@@ -6,41 +6,16 @@ from django_filters import rest_framework as filters # Importação de Filtros
 
 # Create your models here.
 
-# Define os tipos possíveis de sensores (choices para o campo sensor)
-
-TIPOS_SENSORES = [
-    ('Luminosidade', 'Luminosidade'),
-    ('Contador', 'Contador'),
-    ('Temperatura', 'Temperatura'),
-    ('Umidade', 'Umidade'),
-]
-
-# Define o 'STATUS' do sensor para mostrar se está ativo ou inativo
-
-STATUS = [
-    ('Ativo', 'Ativo'),
-    ('Inativo', 'Inativo')
-]
-
-# Define tipo de unidade do sensor
-
-TIPO_UNIDADE = [
-    ('C°', '°C'),
-    ('%', '%'),
-    ('uni', 'uni'),
-    ('lux', 'lux')
-]
-
 # Aqui vai ser o campo do modelo Sensores
 
 class Sensores(models.Model):
-    sensor = models.CharField(max_length=12, choices=TIPOS_SENSORES, null=True, blank=True)
+    sensor = models.CharField(max_length=255)
     mac_address = models.CharField(max_length=255, null=True, blank=True)
-    unidade_medida = models.CharField(max_length=3, choices=TIPO_UNIDADE, null=True, blank=True)
+    unidade_medida = models.CharField(max_length=5)
     valor = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-    status = models.CharField(max_length=8, choices=STATUS, null=True, blank=True)
+    status = models.CharField(max_length=12, null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True)
 
 # Campo de Nome de admim, para identificação simples
