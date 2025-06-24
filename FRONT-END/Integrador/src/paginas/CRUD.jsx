@@ -65,7 +65,7 @@ const dadosSensores = [
   },
 ];
 
-const CRUDPage = ({ dados, tipo, onDelete }) => {
+const CRUDPage = ({ dados, tipo, onAtualizar }) => {
   const [tab, setTab] = useState("visualizar");
   const [editando, setEditando] = useState(null)
   const [formEdicao, setFormEdicao] = useState({})
@@ -97,6 +97,7 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
       });
       alert(`${tipo} criado com sucesso!`);
       e.target.reset();
+      onAtualizar();
     } catch (error) {
       console.error("Erro ao criar: ", error.response?.data || error.message);
       alert("Erro ao Criar!");
@@ -105,12 +106,19 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
 
   const handleDelete = async (id) => {
     const rota = tipo.toLowerCase() === "sensores" ? "sensor" : "ambiente";
+    const token = localStorage.getItem("token")
+
     try {
-      await axios.delete(`http://localhost:8000/${rota}/${id}`);
+      console.log("Tentando deletar:", id, "na rota", rota)
+      await axios.delete(`http://localhost:8000/${rota}/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+      });
       alert(`${tipo} deletado com sucesso!`);
-      onDelete();
+      onAtualizar();
     } catch (error) {
-      console.error("Erro ao deletar: ", error);
+      console.error("Erro ao deletar: ", error.response?.data || error.message);
       alert("Erro ao Deletar!");
     }
   };
@@ -123,12 +131,12 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
       await axios.put(`http://localhost:8000/${rota}/${id}/`, formEdicao, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "aplications/json",
+          "Content-Type": "application/json",
         },
       });
       alert(`${tipo} Atualizado com sucesso`)
       setEditando(null);
-      onDelete();
+      onAtualizar();
     } catch (error) {
       console.error("Erro ao atualizar", error)
       alert("Erro ao atualizar!")
@@ -147,11 +155,10 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
             key={op}
             onClick={() => setTab(op)}
             className={`px-6 py-2 rounded-full font-medium transition-all duration-200
-                         ${
-                           tab === op
-                             ? "bg-green-600 text-white shadow"
-                             : "bg-gray-100 text-gray-700 hover:bg-green-100"
-                         }`}
+                         ${tab === op
+                ? "bg-green-600 text-white shadow"
+                : "bg-gray-100 text-gray-700 hover:bg-green-100"
+              }`}
           >
             {op.charAt(0).toUpperCase() + op.slice(1)}
           </button>
@@ -161,22 +168,22 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
       {tab === "criar" && (
         <form onSubmit={handleCreate} className="space-y-4 max-w-xl mx-auto">
           {Object.keys(dados[0] || {})
-          .map((campo) => (
-            <input
-              key={campo}
-              name={campo}
-              type={
-                campo.toLowerCase().includes("latitude") ||
-                campo.toLowerCase().includes("longitude") ||
-                campo.toLowerCase().includes("valor")
-                  ? "number"
-                  : "text"
-              }
-              placeholder={campo}
-              className="border border-gray-300 px-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-              required
-            />
-          ))}
+            .map((campo) => (
+              <input
+                key={campo}
+                name={campo}
+                type={
+                  campo.toLowerCase().includes("latitude") ||
+                    campo.toLowerCase().includes("longitude") ||
+                    campo.toLowerCase().includes("valor")
+                    ? "number"
+                    : "text"
+                }
+                placeholder={campo}
+                className="border border-gray-300 px-4 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+                required
+              />
+            ))}
           <button
             type="submit"
             className="bg-green-600 text-white px-6 py-2 rounded-md w-full hover:bg-green-700 transition-all"
@@ -211,18 +218,18 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
                     <td
                       key={campo}
                       className="px-4 py-2 border-b text-sm text-gray-700">
-                        {editando === item.id ? (
-                          <input
+                      {editando === item.id ? (
+                        <input
                           value={formEdicao[campo] || ""}
-                          onChange={(e) => 
-                            setFormEdicao((prev) => ({...prev, [campo]: e.target.value }))
-                          } className="border border-gray-300 px-2 py-1 rounded w-full" 
-                          />
-                        ) : campo === 'status' ? (
-                          item[campo] === true || item[campo] === 'True' ? "ativo" : "inativo"
-                          ) : (
-                            item[campo]
-                        )}
+                          onChange={(e) =>
+                            setFormEdicao((prev) => ({ ...prev, [campo]: e.target.value }))
+                          } className="border border-gray-300 px-2 py-1 rounded w-full"
+                        />
+                      ) : campo === 'status' ? (
+                        item[campo] === true || item[campo] === 'True' ? "ativo" : "inativo"
+                      ) : (
+                        item[campo]
+                      )}
                     </td>
                   ))}
                   {tab === "atualizar" && (
@@ -230,9 +237,9 @@ const CRUDPage = ({ dados, tipo, onDelete }) => {
                       {editando === item.id ? (
                         <button onClick={() => salvarEdicao(item.id)} className="text-green-600 hover:underline">
                           Salvar
-                        </button> 
+                        </button>
                       ) : (
-                         <button onClick={() => iniciarEdicao(item)} className="hover:underline">Editar</button>
+                        <button onClick={() => iniciarEdicao(item)} className="hover:underline">Editar</button>
                       )}
                     </td>
                   )}
@@ -275,7 +282,7 @@ export function CRUD() {
       .then((res) => setDados(res.data.results))
       .catch((err) => console.error(`Erro ao buscar ${entidade}:`, err));
   };
-  
+
   useEffect(() => {
     fetchDados();
   }, [entidade]);
@@ -378,29 +385,27 @@ export function CRUD() {
               <div className="flex justify-center gap-6 mb-6">
                 <button
                   onClick={() => setEntidade("sensores")}
-                  className={`px-6 py-2 rounded-full font-semibold transition-all ${
-                    entidade === "sensores"
-                      ? "bg-purple-600 text-white shadow"
-                      : "bg-white text-gray-700 hover:bg-purple-100"
-                  }`}
+                  className={`px-6 py-2 rounded-full font-semibold transition-all ${entidade === "sensores"
+                    ? "bg-purple-600 text-white shadow"
+                    : "bg-white text-gray-700 hover:bg-purple-100"
+                    }`}
                 >
                   Sensores
                 </button>
                 <button
                   onClick={() => setEntidade("ambientes")}
-                  className={`px-6 py-2 rounded-full font-semibold transition-all ${
-                    entidade === "ambientes"
-                      ? "bg-purple-600 text-white shadow"
-                      : "bg-white text-gray-700 hover:bg-purple-100"
-                  }`}
+                  className={`px-6 py-2 rounded-full font-semibold transition-all ${entidade === "ambientes"
+                    ? "bg-purple-600 text-white shadow"
+                    : "bg-white text-gray-700 hover:bg-purple-100"
+                    }`}
                 >
                   Ambientes
                 </button>
               </div>
               <CRUDPage
                 dados={dados}
-                tipo={entidade.charAt(0).toUpperCase() + entidade.slice(1)} 
-                onDelete={fetchDados}
+                tipo={entidade.charAt(0).toUpperCase() + entidade.slice(1)}
+                onAtualizar={fetchDados}
               />
             </div>
           </div>
